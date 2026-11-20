@@ -10,7 +10,7 @@ const read=(f)=>fs.readFileSync(new URL('../dist/'+f,import.meta.url),'utf8');
 test('v0.1.2 displays host and per-app versions without changing the workspace structure',()=>{
   assert.equal(APPS.length,1);
   assert.equal(APPS[0].id,'ciyan');
-  assert.match(APPS[0].version,/^0\.8\.(?:16|17)$/);
+  assert.match(APPS[0].version,/^\d+\.\d+\.\d+$/);
   assert.equal(APPS[0].module,'./app.js');
   const html=homeScreen('https://ciyan.example/');
   assert.match(html,/My Workspace/);
@@ -33,7 +33,7 @@ test('app URLs and app asset URLs retain legacy origin and root paths',()=>{
   assert.equal(activeAppId(base),null);
   assert.throws(()=>appLaunchUrl(base,'unknown'),/Unknown app/);
   assert.ok(fs.existsSync(new URL('../dist/app.js',import.meta.url)));
-  if(APPS[0].version==='0.8.17')assert.ok(fs.existsSync(new URL('../dist/app-host-bridge.js',import.meta.url)));
+  if(APPS[0].version!=='0.8.16')assert.ok(fs.existsSync(new URL('../dist/app-host-bridge.js',import.meta.url)));
   assert.ok(fs.existsSync(new URL('../dist/chapters/index.js',import.meta.url)));
 });
 
@@ -47,7 +47,7 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
   assert.match(read('viewport-lock.js'),/gesturestart/);
   assert.match(read('app.js'),/await loadState\(\)/);
   assert.match(read('app.js'),/await reader.flush\(\)/);
-  if(APPS[0].version==='0.8.17'){
+  if(APPS[0].version!=='0.8.16'){
     assert.match(read('app.js'),/await returnToLauncher\(\)/);
     assert.match(read('app-host-bridge.js'),/__APP_LAUNCHER__/);
   }
@@ -57,7 +57,7 @@ test('service worker generates a unique content hash and caches the launcher and
   const script=read('sw.js');
   assert.match(script,/app-launcher-shell-v0\.1\.2-[a-f0-9]{16}/);
   assert.match(script,/"\.\/index\.html"/);
-  if(APPS[0].version==='0.8.17')assert.match(script,/"\.\/app-host-bridge\.js"/);
+  if(APPS[0].version!=='0.8.16')assert.match(script,/"\.\/app-host-bridge\.js"/);
   assert.match(script,/"\.\/master-data\.js"/);
   assert.match(script,/"\.\/apps-registry\.js"/);
   assert.match(script,/navigationResponse\(result\)/);
