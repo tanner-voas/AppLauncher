@@ -55,13 +55,13 @@ owns its study data, runtime, reader, dictionaries and saved progress.
 - Repository: `tanner-voas/AppLauncher`; branch `main`.
 - Build command: `python3 build.py`
 - Deploy command: `npx --yes wrangler@4 deploy`
-- Keep `wrangler.jsonc` **name** matched to your existing Worker. It is set
-  to `ciyan`, matching the hostname shown on your existing iPhone PWA
-  (`ciyan.tannervoas.workers.dev`). Confirm your Cloudflare dashboard uses
-  that exact production Worker before connecting the integration. To retain
-  iOS local storage, deploy to the **same origin/hostname** as the old PWA. Simply publishing to
-  a different `pages.dev` or `workers.dev` hostname creates a separate storage
-  container and will not migrate the saved data.
+- `wrangler.jsonc` **name** is set to `applauncher` for a separate Worker,
+  matching the Cloudflare project name. This deploys independently from the
+  existing `ciyan` Worker, so do not change it back unless intentionally
+  migrating production hosting later. The new `applauncher.tannervoas.workers.dev`
+  origin has its **own browser storage**: Ciyan progress stored on the old
+  `ciyan.tannervoas.workers.dev` origin does not automatically transfer.
+  Use Ciyan's own backup/import tools if migrating saved data later.
 
 To build locally:
 
