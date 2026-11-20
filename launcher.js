@@ -1,7 +1,8 @@
 import {runUpdateButton} from './pwa-update.js';
 import {APPS} from './apps-registry.js';
+import {LAUNCHER_VERSION} from './launcher-meta.js';
 
-// AppLauncher v0.1.1: one installed PWA, independently loaded app runtimes.
+// AppLauncher v0.1.2: one installed PWA, independently loaded app runtimes.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
 // Add future entries here, with their own modules and storage namespaces.
 export function launcherUrl(current){return new URL('./',current).href;}
@@ -15,8 +16,8 @@ export function activeAppId(current){
 }
 
 export function homeScreen(current){
-  const tiles=APPS.map(app=>`<a class="launcher-tile" data-launch-app="${app.id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${app.name}"><span class="launcher-tile-icon" aria-hidden="true">${app.glyph}</span><span class="launcher-tile-name">${app.name}</span></a>`).join('');
-  return `<div class="launcher-screen"><header class="launcher-header"><h1 class="launcher-workspace-title">My Workspace</h1>
+  const tiles=APPS.map(app=>`<a class="launcher-tile" data-launch-app="${app.id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${app.name}"><span class="launcher-tile-icon" aria-hidden="true">${app.glyph}</span><span class="launcher-tile-name">${app.name}</span><span class="launcher-tile-version">v${app.version}</span></a>`).join('');
+  return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><span class="launcher-version">v${LAUNCHER_VERSION}</span><h1 class="launcher-workspace-title">My Workspace</h1></div>
     <button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
     </button></header>
