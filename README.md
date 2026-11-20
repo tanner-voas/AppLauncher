@@ -1,4 +1,4 @@
-# AppLauncher v0.1.0
+# AppLauncher v0.1.1
 
 The single installed PWA that hosts Ciyan and future independent applications.
 The UI remains v0.8.16's minimal **My Workspace**: one heading, refresh,

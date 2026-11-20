@@ -1,13 +1,13 @@
 {
   "id": "./",
-  "name": "Cíyán — Mandarin flashcards",
-  "short_name": "Cíyán",
-  "description": "Learn conversational Mandarin with beautiful offline spaced repetition.",
+  "name": "AppLauncher — My Workspace",
+  "short_name": "Launcher",
+  "description": "Launch and manage your installed web apps from one clean workspace.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f6f1",
-  "theme_color": "#f6f6f1",
+  "theme_color": "#1c274f",
   "orientation": "portrait",
   "lang": "en",
   "icons": [

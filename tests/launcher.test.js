@@ -6,7 +6,7 @@ import {APPS} from '../dist/apps-registry.js';
 import {homeScreen,appLaunchUrl,activeAppId,launcherUrl,installHostApi} from '../dist/launcher.js';
 
 const read=(f)=>fs.readFileSync(new URL('../dist/'+f,import.meta.url),'utf8');
-test('v0.1.0 starts on the exact minimal v0.8.16 My Workspace UI',()=>{
+test('v0.1.1 starts on the exact minimal v0.8.16 My Workspace UI with AppLauncher branding',()=>{
   assert.equal(APPS.length,1);
   assert.equal(APPS[0].id,'ciyan');
   assert.match(APPS[0].version,/^0\.8\.(?:16|17)$/);
@@ -35,6 +35,8 @@ test('app URLs and app asset URLs retain legacy origin and root paths',()=>{
 test('PWA identity, viewport lock and app storage survive migration',()=>{
   const manifest=JSON.parse(read('manifest.webmanifest'));
   assert.equal(manifest.id,'./');
+  assert.equal(manifest.name,'AppLauncher — My Workspace');
+  assert.equal(manifest.short_name,'Launcher');
   assert.equal(manifest.start_url,'./');
   assert.match(read('index.html'),/maximum-scale=1, user-scalable=no/);
   assert.match(read('viewport-lock.js'),/gesturestart/);
@@ -48,7 +50,7 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
 
 test('service worker generates a unique content hash and caches the launcher and app',()=>{
   const script=read('sw.js');
-  assert.match(script,/app-launcher-shell-v0\.1\.0-[a-f0-9]{16}/);
+  assert.match(script,/app-launcher-shell-v0\.1\.1-[a-f0-9]{16}/);
   assert.match(script,/"\.\/index\.html"/);
   if(APPS[0].version==='0.8.17')assert.match(script,/"\.\/app-host-bridge\.js"/);
   assert.match(script,/"\.\/master-data\.js"/);

@@ -1,7 +1,7 @@
 import {runUpdateButton} from './pwa-update.js';
 import {APPS} from './apps-registry.js';
 
-// AppLauncher v0.1.0: one installed PWA, independently loaded app runtimes.
+// AppLauncher v0.1.1: one installed PWA, independently loaded app runtimes.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
 // Add future entries here, with their own modules and storage namespaces.
 export function launcherUrl(current){return new URL('./',current).href;}

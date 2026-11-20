@@ -74,12 +74,12 @@ def build():
     for item in shell:
         h.update(item.relative_to(TARGET).as_posix().encode()+b'\0')
         h.update(hashlib.sha256(item.read_bytes()).digest())
-    name=f'app-launcher-shell-v0.1.0-{h.hexdigest()[:16]}'
+    name=f'app-launcher-shell-v0.1.1-{h.hexdigest()[:16]}'
     paths=['./'+item.relative_to(TARGET).as_posix() for item in shell]
     template=(ROOT/'sw.template.js').read_text(encoding='utf-8')
     worker=template.replace('__SHELL_CACHE_NAME__',name).replace('__PRECACHE_ASSETS__',json.dumps(paths,ensure_ascii=False,separators=(',',':')))
     (TARGET/'sw.js').write_text(worker,encoding='utf-8')
-    print(f'AppLauncher v0.1.0: {len(apps)} apps, {len(paths)} precached assets, cache={name}')
+    print(f'AppLauncher v0.1.1: {len(apps)} apps, {len(paths)} precached assets, cache={name}')
     print(f'Cloudflare static bundle: {TARGET}')
 
 if __name__=='__main__':build()
