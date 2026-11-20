@@ -1,0 +1,15 @@
+{
+  "apps": [
+    {
+      "id": "ciyan",
+      "name": "Cíyán",
+      "glyph": "词",
+      "source": "apps/ciyan",
+      "distribution": "dist/ciyan",
+      "destination": ".",
+      "module": "./app.js",
+      "stylesheet": "./styles.css",
+      "legacy_root": true
+    }
+  ]
+}

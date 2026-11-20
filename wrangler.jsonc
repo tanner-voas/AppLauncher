@@ -1,0 +1,8 @@
+{
+  // The iOS deployment screenshot shows ciyan.tannervoas.workers.dev.
+  // Preserve that Worker name and hostname for existing local progress.
+  "name": "ciyan",
+  "compatibility_date": "2026-11-19",
+  "workers_dev": true,
+  "assets": { "directory": "./dist" }
+}

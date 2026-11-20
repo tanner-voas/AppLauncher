@@ -1,0 +1,4 @@
+[submodule "apps/ciyan"]
+    path = apps/ciyan
+    url = https://github.com/tanner-voas/Ciyan.git
+    branch = main

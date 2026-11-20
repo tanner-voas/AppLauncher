@@ -1,0 +1,41 @@
+name: Update Ciyan submodule
+on:
+  repository_dispatch:
+    types: [ciyan-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-app-submodules
+  cancel-in-progress: false
+
+jobs:
+  advance-ciyan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: true
+      - name: Advance pinned Ciyan commit
+        env:
+          EXPECTED_SHA: ${{ github.event.client_payload.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C apps/ciyan fetch origin main
+          ACTUAL_SHA="$(git -C apps/ciyan rev-parse FETCH_HEAD)"
+          if [[ -n "$EXPECTED_SHA" && "$EXPECTED_SHA" != "$ACTUAL_SHA" ]]; then
+            echo "Newer Ciyan commit $ACTUAL_SHA supersedes notification for $EXPECTED_SHA"
+          fi
+          git -C apps/ciyan checkout --detach "$ACTUAL_SHA"
+          if git diff --quiet -- apps/ciyan; then
+            echo "Submodule already up to date"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/ciyan
+          git commit -m "build: update Ciyan submodule to ${ACTUAL_SHA:0:12}"
+          git push origin HEAD:main
