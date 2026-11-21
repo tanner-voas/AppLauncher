@@ -61,6 +61,18 @@ def package_app(app):
     with tempfile.TemporaryDirectory(prefix='app-launcher-stage-') as stage_dir:
         stage=Path(stage_dir)/'assets'
         shutil.copytree(assets,stage)
+        # An app may have a standalone PWA icon that its launcher-module
+        # distribution does not include. Stage that existing asset explicitly.
+        if app.get('tile_icon'):
+            icon=safe_rel(app['tile_icon'])
+            if icon.suffix.lower() != '.png':
+                raise ValueError('Launcher tile icon must be a PNG')
+            original=source/icon
+            if not original.is_file():
+                raise FileNotFoundError('Launcher tile icon is absent')
+            target=stage/icon
+            target.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copy2(original,target)
         copies=[]
         for file in sorted(stage.rglob('*')):
             if not file.is_file():continue
@@ -99,7 +111,7 @@ def build():
     if len(ids)!=len(set(ids)):raise ValueError('Duplicate app IDs')
     for app in apps:
         if not re.fullmatch(r'[a-z][a-z0-9-]*',app['id']):raise ValueError('Invalid app ID')
-        for key in ('source','distribution','destination','module','stylesheet'):
+        for key in ('source','distribution','destination','module','stylesheet','tile_icon'):
             if key in app:safe_rel(app[key])
     if TARGET.exists():shutil.rmtree(TARGET)
     TARGET.mkdir(parents=True)
@@ -111,6 +123,8 @@ def build():
         try:
             version=package_app(app)
             entry.update(version=version,status='ready')
+            if app.get('tile_icon'):
+                entry['icon']='./'+(safe_rel(app['destination'])/safe_rel(app['tile_icon'])).as_posix()
             print(f"  READY {app['id']} v{version}")
         except Exception as exc:
             entry.update(version='—',status='failed',reason=safe_failure(exc))

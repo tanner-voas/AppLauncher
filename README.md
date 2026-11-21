@@ -1,8 +1,14 @@
-# AppLauncher v0.1.3
+# AppLauncher v0.1.4
 
 The single installed PWA that currently hosts Ciyan and WorldGen, with support for more independent applications.
 The UI remains v0.8.16's minimal **My Workspace**: one heading, refresh,
 and app tiles. Opening Ciyan preserves its existing Study start page.
+
+**v0.1.4:** The WorldGen tile uses WorldGen's own `icons/icon-192.png`
+artwork instead of a placeholder diamond character. AppLauncher packages this
+source icon automatically, includes it in its offline cache, and falls back to
+the text glyph if the image cannot load. The Cíyán tile is unchanged.
+
 
 ## Repository structure
 
@@ -18,7 +24,7 @@ and app tiles. Opening Ciyan preserves its existing Study start page.
 AppLauncher owns **one** manifest, service worker, and update control. Ciyan
 owns its study data, runtime, reader, dictionaries and saved progress.
 
-## Publishing this v0.1.3 release (order matters)
+## Original v0.1.3 repository setup (historical reference)
 
 This full repository is based on the supplied AppLauncher v0.1.2 history (its
 `main` tip was `ddbe248`), not the older v0.1.2 snapshot. Both submodules are

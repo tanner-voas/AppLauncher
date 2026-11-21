@@ -2,7 +2,7 @@ import {runUpdateButton} from './pwa-update.js';
 import {APPS} from './apps-registry.js';
 import {LAUNCHER_VERSION} from './launcher-meta.js';
 
-// AppLauncher v0.1.3: failed app builds are visible but never launchable.
+// AppLauncher v0.1.4: first-party app tile imagery, with glyph fallback.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
 // Add future entries here, with their own modules and storage namespaces.
 export function launcherUrl(current){return new URL('./',current).href;}
@@ -21,7 +21,11 @@ export function homeScreen(current){
   const tiles=APPS.map(app=>{
     const failed=app.status==='failed';
     const name=escapeHtml(app.name),glyph=escapeHtml(app.glyph),id=escapeHtml(app.id);
-    const common=`<span class="launcher-tile-icon" aria-hidden="true">${glyph}</span><span class="launcher-tile-name">${name}</span>`;
+    // Preserve the glyph underneath the image as a network/offline fallback.
+    // Failed apps retain the existing disabled, gray glyph treatment.
+    const artwork=!failed&&app.icon
+      ?`<img src="${escapeHtml(app.icon)}" alt="" decoding="async" draggable="false">`:'';
+    const common=`<span class="launcher-tile-icon${artwork?' launcher-tile-icon-art':''}" aria-hidden="true">${glyph}${artwork}</span><span class="launcher-tile-name">${name}</span>`;
     if(failed)return `<button type="button" class="launcher-tile launcher-tile-failed" disabled aria-label="${name} unavailable: build failed" title="${escapeHtml(app.reason||'App build failed')}">${common}<span class="launcher-tile-failure">BUILD FAILED</span></button>`;
     return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span></a>`;
   }).join('');
@@ -78,7 +82,10 @@ export async function launchApp(id){
     await loadAppStyle(selected);
     installHostApi();
     document.body.classList.remove('launcher-mode');
-    document.querySelector('#app').innerHTML=`<div class="loading-state"><div class="brand-mark">${selected.glyph}</div><div class="loading-spinner"></div><p>Opening ${selected.name}…</p></div>`;
+    const splashArt=selected.icon
+      ?`<img src="${escapeHtml(selected.icon)}" alt="" draggable="false">`
+      :escapeHtml(selected.glyph);
+    document.querySelector('#app').innerHTML=`<div class="loading-state"><div class="brand-mark${selected.icon?' brand-mark-art':''}">${splashArt}</div><div class="loading-spinner"></div><p>Opening ${escapeHtml(selected.name)}…</p></div>`;
     // The app module is loaded only after selecting its tile.
     await import(selected.module);
   }catch(error){

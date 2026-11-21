@@ -41,3 +41,24 @@ test('a failed app and absent submodule do not block a healthy app or service wo
   assert.throws(()=>appLaunchUrl('https://example.org/','broken'),/unavailable/);
  }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });
+
+test('tile artwork is copied from the source app and missing artwork fails only that app',()=>{
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'wg-launcher-art-test-'));
+ try{
+  for(const p of ['build.py','index.html','launcher.js','workspace.css','pwa-update.js','viewport-lock.js','sw.template.js','manifest.webmanifest','_headers','package.json','icons'])copy(p,temp);
+  const app=name=>({id:name,name,glyph:'◇',source:`apps/${name}`,destination:`apps/${name}`,distribution:`dist/${name}`,module:`./apps/${name}/app.js`,stylesheet:`./apps/${name}/styles.css`,tile_icon:'icons/icon-192.png'});
+  fs.writeFileSync(path.join(temp,'apps.json'),JSON.stringify({apps:[app('art'),app('missing-art')]}));
+  fakeApp(temp,'art');fakeApp(temp,'missing-art');
+  fs.mkdirSync(path.join(temp,'apps','art','icons'),{recursive:true});
+  const bytes=fs.readFileSync(path.join(ROOT,'apps/worldgen/icons/icon-192.png'));
+  fs.writeFileSync(path.join(temp,'apps','art','icons/icon-192.png'),bytes);
+  const output=execFileSync('python3',['build.py'],{cwd:temp,encoding:'utf8',stdio:['ignore','pipe','pipe']});
+  assert.match(output,/1 ready, 1 failed/);
+  assert.ok(fs.readFileSync(path.join(temp,'dist/apps/art/icons/icon-192.png')).equals(bytes));
+  assert.ok(!fs.existsSync(path.join(temp,'dist/apps/missing-art/icons/icon-192.png')));
+  const registry=fs.readFileSync(path.join(temp,'dist/apps-registry.js'),'utf8');
+  assert.match(registry,/"id":"art".*"icon":"\.\/apps\/art\/icons\/icon-192\.png"/);
+  assert.match(registry,/"id":"missing-art".*"status":"failed"/);
+  assert.match(fs.readFileSync(path.join(temp,'dist/sw.js'),'utf8'),/apps\/art\/icons\/icon-192\.png/);
+ }finally{fs.rmSync(temp,{recursive:true,force:true});}
+});

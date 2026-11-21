@@ -19,7 +19,8 @@
       "distribution": "dist/worldgen",
       "destination": "apps/worldgen",
       "module": "./apps/worldgen/app.js",
-      "stylesheet": "./apps/worldgen/styles.css"
+      "stylesheet": "./apps/worldgen/styles.css",
+      "tile_icon": "icons/icon-192.png"
     }
   ]
 }
