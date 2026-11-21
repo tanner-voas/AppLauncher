@@ -10,6 +10,16 @@
       "module": "./app.js",
       "stylesheet": "./styles.css",
       "legacy_root": true
+    },
+    {
+      "id": "worldgen",
+      "name": "WorldGen",
+      "glyph": "◈",
+      "source": "apps/worldgen",
+      "distribution": "dist/worldgen",
+      "destination": "apps/worldgen",
+      "module": "./apps/worldgen/app.js",
+      "stylesheet": "./apps/worldgen/styles.css"
     }
   ]
 }

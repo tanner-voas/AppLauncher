@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
           persist-credentials: true
       - name: Advance pinned Ciyan commit
         env:
@@ -25,6 +25,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git submodule update --init -- apps/ciyan
           git -C apps/ciyan fetch origin main
           ACTUAL_SHA="$(git -C apps/ciyan rev-parse FETCH_HEAD)"
           if [[ -n "$EXPECTED_SHA" && "$EXPECTED_SHA" != "$ACTUAL_SHA" ]]; then

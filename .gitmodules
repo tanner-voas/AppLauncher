@@ -2,3 +2,7 @@
     path = apps/ciyan
     url = https://github.com/tanner-voas/Ciyan.git
     branch = main
+[submodule "apps/worldgen"]
+	path = apps/worldgen
+	url = https://github.com/tanner-voas/WorldGen.git
+	branch = main

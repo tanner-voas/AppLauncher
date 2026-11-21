@@ -1,46 +1,47 @@
-# AppLauncher v0.1.2
+# AppLauncher v0.1.3
 
-The single installed PWA that hosts Ciyan and future independent applications.
+The single installed PWA that currently hosts Ciyan and WorldGen, with support for more independent applications.
 The UI remains v0.8.16's minimal **My Workspace**: one heading, refresh,
 and app tiles. Opening Ciyan preserves its existing Study start page.
 
 ## Repository structure
 
-- `apps/ciyan` — **Git submodule**, tracking `tanner-voas/Ciyan` (pinned commit).
+- `apps/ciyan` — **Git submodule** pinned to Ciyan v0.9.0 (`fd4747a`), preserved from the supplied v0.1.2 repository.
+- `apps/worldgen` — **Git submodule** pinned to WorldGen v0.1.0 (`54aa1ef`).
 - `apps.json` — registered app metadata, source/build paths, and hosted URLs.
 - `launcher.js`, `workspace.css`, `index.html` — PWA launcher and shared host API.
 - `pwa-update.js`, `sw.template.js`, `viewport-lock.js` — shared PWA lifecycle.
 - `build.py` — combines app bundles with the host, generates the registry and
   content-fingerprinted service worker in `dist/`.
-- `.github/workflows/update-ciyan.yml` — updates the pinned submodule in response
-  to Ciyan's GitHub dispatch notification or a manual workflow run.
+- `.github/workflows/update-ciyan.yml` and `update-worldgen.yml` — independently update each pinned submodule after an app update dispatch or a manual workflow run.
 
 AppLauncher owns **one** manifest, service worker, and update control. Ciyan
 owns its study data, runtime, reader, dictionaries and saved progress.
 
-## One-time setup (order matters)
+## Publishing this v0.1.3 release (order matters)
 
-1. Create an empty public GitHub repo named `tanner-voas/AppLauncher`. The zip
-   contains an initialized local git repository with an actual Ciyan gitlink
-   pinned to `6b55026caf1bfb150d863c07bb4761f9e6e644eb` (v0.8.16).
-   Unpack, then push using:
+This full repository is based on the supplied AppLauncher v0.1.2 history (its
+`main` tip was `ddbe248`), not the older v0.1.2 snapshot. Both submodules are
+already initialized and include their source and local Git histories. You do
+**not** need to re-clone them or run `git submodule update --remote`.
 
-   ```sh
-   git remote add origin https://github.com/tanner-voas/AppLauncher.git
-   git push -u origin main
-   ```
+1. Create an **empty** GitHub repository `tanner-voas/WorldGen` (without README,
+   license, or `.gitignore`). Push the separate WorldGen v0.1.0 repository to it
+   first, so AppLauncher's `54aa1ef` submodule commit can resolve remotely.
+2. Set a fine-grained GitHub PAT allowing **Contents: Read and write** on
+   `tanner-voas/AppLauncher` as the WorldGen repository Actions secret
+   `APP_LAUNCHER_DISPATCH_TOKEN`.
+3. In this AppLauncher folder, verify `git submodule status`, `python3 build.py`,
+   and `npm test`, then run `git push origin main`. The `origin` URL points to
+   `https://github.com/tanner-voas/AppLauncher.git` already.
+4. Confirm the existing Cloudflare deployment is following the launcher `main`
+   branch. Do not change the PWA origin unless you intend to migrate Ciyan's
+   browser-local storage.
 
-2. Apply the provided **v0.8.17 git-am patch** in the **existing Ciyan** repo.
-3. Create a fine-grained GitHub PAT granting **Contents: Read and write** on
-   **AppLauncher only**, and add it as Ciyan repository secret
-   `APP_LAUNCHER_DISPATCH_TOKEN` (Ciyan → Settings → Secrets and variables → Actions).
-4. Push Ciyan `main`. The Ciyan Action dispatches `ciyan-updated`; AppLauncher's
-   Action fetches Ciyan `main`, commits its pinned submodule SHA and pushes
-   AppLauncher `main`. Cloudflare sees the new AppLauncher commit and builds.
-   If the Ciyan push happened before you set the secret, run **Update Ciyan
-   submodule** manually from AppLauncher's GitHub Actions page.
-5. Connect **AppLauncher**, *not Ciyan*, to your Cloudflare Pages or Workers
-   Git integration. Enable automatic deployments on `main`.
+The existing Ciyan auto-update workflow and its PAT remain unchanged; Ciyan is
+already pinned to the v0.9.0 commit supplied with the launcher. Future Ciyan
+and WorldGen app pushes can advance their pins independently through the
+repository-dispatch workflows.
 
 ### Cloudflare Pages
 
@@ -90,8 +91,22 @@ verification. Future apps can follow the same contract.
 ## Submodule / deployment guarantees
 
 Each AppLauncher commit locks exact app git SHAs, even with automatic updates.
-No branch is silently fetched at Cloudflare build time; `build.py` fails rather
-than publishing a partial deployment. A new app commit triggers a pinned update
+No branch is silently fetched during packaging at Cloudflare build time.
+As of v0.1.3, **individual app packaging failures are isolated**: the launcher
+still produces a valid bundle, its successful apps stay available, and the
+failed app remains listed as a gray, disabled `BUILD FAILED` tile. Only its
+own packaged assets are excluded from precaching. Failures in the launcher
+itself (invalid registry, corrupted host assets, etc.) remain fatal. The
+external Git host must still fetch the AppLauncher repository itself. App
+submodule checkout is deferred to `build.py`, which catches failures per app.
+The per-app update workflows initialize only their own submodule, so a failure
+fetching a different app does not block an unrelated update.
+
+**WorldGen v0.1.0** is integrated as `apps/worldgen` using its own independent
+repository. It packages a standalone PWA separately. Its interactive first
+four layers cover Voronoi geometry, tectonic plates, terrain elevation and
+sea level. Future layers are listed but deliberately disabled.
+ A new app commit triggers a pinned update
 commit in AppLauncher, making deployment history auditable and revertible.
 
 The AppLauncher combined output **preserves Ciyan root asset URLs and

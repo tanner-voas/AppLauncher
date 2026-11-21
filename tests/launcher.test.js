@@ -7,8 +7,10 @@ import {LAUNCHER_VERSION} from '../dist/launcher-meta.js';
 import {homeScreen,appLaunchUrl,activeAppId,launcherUrl,installHostApi} from '../dist/launcher.js';
 
 const read=(f)=>fs.readFileSync(new URL('../dist/'+f,import.meta.url),'utf8');
-test('v0.1.2 displays host and per-app versions without changing the workspace structure',()=>{
-  assert.equal(APPS.length,1);
+test('v0.1.3 displays host and both application versions without changing workspace structure',()=>{
+  assert.equal(APPS.length,2);
+  assert.deepEqual(APPS.map(a=>a.id),['ciyan','worldgen']);
+  assert.ok(APPS.every(app=>app.status==='ready'));
   assert.equal(APPS[0].id,'ciyan');
   assert.match(APPS[0].version,/^\d+\.\d+\.\d+$/);
   assert.equal(APPS[0].module,'./app.js');
@@ -20,6 +22,8 @@ test('v0.1.2 displays host and per-app versions without changing the workspace s
   assert.match(read('launcher-meta.js'),/LAUNCHER_VERSION/);
   assert.match(html,/data-update-launcher/);
   assert.match(html,/data-launch-app="ciyan"/);
+  assert.match(html,/data-launch-app="worldgen"/);
+  assert.match(html,/WorldGen/);
   assert.doesNotMatch(html,/Installed apps|Your apps, in one place|launcher-monogram/);
   assert.match(read('index.html'),/src="\.\/launcher\.js"/);
   assert.doesNotMatch(read('index.html'),/src="\.\/app\.js"/);
@@ -31,7 +35,10 @@ test('app URLs and app asset URLs retain legacy origin and root paths',()=>{
   assert.equal(launcherUrl(base+'?app=ciyan'),base);
   assert.equal(activeAppId(base+'?app=ciyan'),'ciyan');
   assert.equal(activeAppId(base),null);
-  assert.throws(()=>appLaunchUrl(base,'unknown'),/Unknown app/);
+  assert.throws(()=>appLaunchUrl(base,'unknown'),/unavailable/);
+  assert.equal(appLaunchUrl(base,'worldgen'),base+'?app=worldgen');
+  assert.ok(fs.existsSync(new URL('../dist/apps/worldgen/app.js',import.meta.url)));
+  assert.ok(fs.existsSync(new URL('../dist/apps/worldgen/compute-worker.js',import.meta.url)));
   assert.ok(fs.existsSync(new URL('../dist/app.js',import.meta.url)));
   if(APPS[0].version!=='0.8.16')assert.ok(fs.existsSync(new URL('../dist/app-host-bridge.js',import.meta.url)));
   assert.ok(fs.existsSync(new URL('../dist/chapters/index.js',import.meta.url)));
@@ -55,11 +62,12 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
 
 test('service worker generates a unique content hash and caches the launcher and app',()=>{
   const script=read('sw.js');
-  assert.match(script,/app-launcher-shell-v0\.1\.2-[a-f0-9]{16}/);
+  assert.match(script,/app-launcher-shell-v0\.1\.3-[a-f0-9]{16}/);
   assert.match(script,/"\.\/index\.html"/);
   if(APPS[0].version!=='0.8.16')assert.match(script,/"\.\/app-host-bridge\.js"/);
   assert.match(script,/"\.\/master-data\.js"/);
   assert.match(script,/"\.\/apps-registry\.js"/);
+  assert.match(script,/"\.\/apps\/worldgen\/compute-worker\.js"/);
   assert.match(script,/navigationResponse\(result\)/);
   assert.match(script,/new Response\(response\.body/);
   assert.match(script,/k\.startsWith\('ciyan-shell-'\)/);
@@ -93,11 +101,11 @@ test('generated service worker preserves Safari navigation response semantics',a
     self:{location:{origin:'https://ciyan.example'},registration:{scope:'https://ciyan.example/'},addEventListener:(name,handler)=>handlers[name]=handler}
   };
   vm.runInNewContext(read('sw.js'),ctx);
-  for (const url of ['https://ciyan.example/','https://ciyan.example/?app=ciyan']) {
+  for (const url of ['https://ciyan.example/','https://ciyan.example/?app=ciyan','https://ciyan.example/?app=worldgen']) {
     let task;
     handlers.fetch({request:{url,method:'GET',mode:'navigate'},respondWith:promise=>task=promise});
     const result=await task;
     assert.equal(result.status,200);assert.equal(result.redirected,false);
   }
-  assert.deepEqual(lookups,['https://ciyan.example/index.html','https://ciyan.example/index.html']);
+  assert.deepEqual(lookups,['https://ciyan.example/index.html','https://ciyan.example/index.html','https://ciyan.example/index.html']);
 });

@@ -2,12 +2,12 @@ import {runUpdateButton} from './pwa-update.js';
 import {APPS} from './apps-registry.js';
 import {LAUNCHER_VERSION} from './launcher-meta.js';
 
-// AppLauncher v0.1.2: one installed PWA, independently loaded app runtimes.
+// AppLauncher v0.1.3: failed app builds are visible but never launchable.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
 // Add future entries here, with their own modules and storage namespaces.
 export function launcherUrl(current){return new URL('./',current).href;}
 export function appLaunchUrl(current,id){
-  if(!APPS.some(app=>app.id===id))throw new Error('Unknown app');
+  if(!APPS.some(app=>app.id===id&&app.status!=='failed'))throw new Error('Application unavailable');
   const next=new URL(launcherUrl(current));next.searchParams.set('app',id);return next.href;
 }
 export function activeAppId(current){
@@ -15,13 +15,22 @@ export function activeAppId(current){
   return APPS.some(app=>app.id===id)?id:null;
 }
 
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));}
 export function homeScreen(current){
-  const tiles=APPS.map(app=>`<a class="launcher-tile" data-launch-app="${app.id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${app.name}"><span class="launcher-tile-icon" aria-hidden="true">${app.glyph}</span><span class="launcher-tile-name">${app.name}</span><span class="launcher-tile-version">v${app.version}</span></a>`).join('');
+  const failures=APPS.filter(app=>app.status==='failed');
+  const tiles=APPS.map(app=>{
+    const failed=app.status==='failed';
+    const name=escapeHtml(app.name),glyph=escapeHtml(app.glyph),id=escapeHtml(app.id);
+    const common=`<span class="launcher-tile-icon" aria-hidden="true">${glyph}</span><span class="launcher-tile-name">${name}</span>`;
+    if(failed)return `<button type="button" class="launcher-tile launcher-tile-failed" disabled aria-label="${name} unavailable: build failed" title="${escapeHtml(app.reason||'App build failed')}">${common}<span class="launcher-tile-failure">BUILD FAILED</span></button>`;
+    return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span></a>`;
+  }).join('');
   return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><span class="launcher-version">v${LAUNCHER_VERSION}</span><h1 class="launcher-workspace-title">My Workspace</h1></div>
     <button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
     </button></header>
     <nav class="launcher-grid" aria-label="Applications">${tiles}</nav>
+    ${failures.length?`<p class="launcher-build-warning" role="status">${failures.length} app${failures.length===1?'':'s'} could not be built. Unavailable apps are shown in gray; other apps are unaffected.</p>`:''}
     <p class="launcher-error" aria-live="polite"></p></div>`;
 }
 
@@ -60,6 +69,7 @@ let launching=false;
 export async function launchApp(id){
   const selected=APPS.find(app=>app.id===id);
   if(!selected||launching)return;
+  if(selected.status==='failed')throw new Error(`${selected.name} is unavailable: its build failed`);
   launching=true;
   const previous=location.href;
   try{
@@ -97,12 +107,17 @@ export async function startLauncher(){
   const id=activeAppId(location.href);
   if(id){
     const selected=APPS.find(app=>app.id===id);
+    if(selected.status==='failed'){history.replaceState(null,'',launcherUrl(location.href));return renderHome();}
     document.title=`${selected.name} v${selected.version}`;
     await loadAppStyle(selected);
     installHostApi();
     await import(selected.module);
     return;
   }
+  renderHome();
+}
+
+function renderHome(){
   document.title='My Workspace';
   document.body.classList.add('launcher-mode');
   const host=document.querySelector('#app');
