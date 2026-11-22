@@ -7,9 +7,9 @@ import {LAUNCHER_VERSION} from '../dist/launcher-meta.js';
 import {homeScreen,appLaunchUrl,activeAppId,launcherUrl,installHostApi} from '../dist/launcher.js';
 
 const read=(f)=>fs.readFileSync(new URL('../dist/'+f,import.meta.url),'utf8');
-test('v0.1.4 displays host and both application versions without changing workspace structure',()=>{
-  assert.equal(APPS.length,2);
-  assert.deepEqual(APPS.map(a=>a.id),['ciyan','worldgen']);
+test('v0.1.5 displays host and all three application versions without changing workspace structure',()=>{
+  assert.equal(APPS.length,3);
+  assert.deepEqual(APPS.map(a=>a.id),['ciyan','worldgen','ascendant']);
   assert.ok(APPS.every(app=>app.status==='ready'));
   assert.equal(APPS[0].id,'ciyan');
   assert.match(APPS[0].version,/^\d+\.\d+\.\d+$/);
@@ -24,6 +24,11 @@ test('v0.1.4 displays host and both application versions without changing worksp
   assert.match(html,/data-launch-app="ciyan"/);
   assert.match(html,/data-launch-app="worldgen"/);
   assert.match(html,/WorldGen/);
+  assert.match(html,/data-launch-app="ascendant"/);
+  assert.equal(APPS[2].icon,'./apps/ascendant/icons/icon-192.png');
+  assert.ok(fs.existsSync(new URL('../dist/apps/ascendant/engine.js',import.meta.url)));
+  assert.ok(fs.existsSync(new URL('../dist/apps/ascendant/maps.js',import.meta.url)));
+  assert.equal(appLaunchUrl('https://ciyan.example/','ascendant'),'https://ciyan.example/?app=ascendant');
   assert.equal(APPS[0].icon,undefined); // Cíyán keeps its existing character tile.
   assert.equal(APPS[1].icon,'./apps/worldgen/icons/icon-192.png');
   assert.match(html,/<img src="\.\/apps\/worldgen\/icons\/icon-192\.png" alt=""/);
@@ -68,13 +73,15 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
 
 test('service worker generates a unique content hash and caches the launcher and app',()=>{
   const script=read('sw.js');
-  assert.match(script,/app-launcher-shell-v0\.1\.4-[a-f0-9]{16}/);
+  assert.match(script,/app-launcher-shell-v0\.1\.5-[a-f0-9]{16}/);
   assert.match(script,/"\.\/index\.html"/);
   if(APPS[0].version!=='0.8.16')assert.match(script,/"\.\/app-host-bridge\.js"/);
   assert.match(script,/"\.\/master-data\.js"/);
   assert.match(script,/"\.\/apps-registry\.js"/);
   assert.match(script,/"\.\/apps\/worldgen\/compute-worker\.js"/);
   assert.match(script,/"\.\/apps\/worldgen\/icons\/icon-192\.png"/);
+  assert.match(script,/"\.\/apps\/ascendant\/engine\.js"/);
+  assert.match(script,/"\.\/apps\/ascendant\/icons\/icon-192\.png"/);
   assert.match(script,/navigationResponse\(result\)/);
   assert.match(script,/new Response\(response\.body/);
   assert.match(script,/k\.startsWith\('ciyan-shell-'\)/);

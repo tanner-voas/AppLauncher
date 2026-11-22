@@ -126,3 +126,7 @@ GitHub Actions `GITHUB_TOKEN` cannot dispatch another repository; the
 fine-grained PAT is required for the Ciyan → AppLauncher notification.
 If Cloudflare's Git integration doesn't build from the automated submodule
 commit, recheck production branch/build filters and GitHub App access.
+
+### Ascendant (v0.1.5 launcher)
+
+Ascendant is a classless 5v5 tactical battleground prototype with its own repo and standalone PWA. It is loaded only when its tile is selected. It stores roster setup under `ascendant.setup.v1`. Chronicle remains a separate future project and is not registered in the workspace.

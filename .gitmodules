@@ -6,3 +6,7 @@
 	path = apps/worldgen
 	url = https://github.com/tanner-voas/WorldGen.git
 	branch = main
+[submodule "apps/ascendant"]
+	path = apps/ascendant
+	url = https://github.com/tanner-voas/Ascendant.git
+	branch = main

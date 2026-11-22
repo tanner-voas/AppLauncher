@@ -2,7 +2,7 @@ import {runUpdateButton} from './pwa-update.js';
 import {APPS} from './apps-registry.js';
 import {LAUNCHER_VERSION} from './launcher-meta.js';
 
-// AppLauncher v0.1.4: first-party app tile imagery, with glyph fallback.
+// AppLauncher v0.1.5: first-party app tile imagery, with glyph fallback.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
 // Add future entries here, with their own modules and storage namespaces.
 export function launcherUrl(current){return new URL('./',current).href;}
