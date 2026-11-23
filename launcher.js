@@ -78,6 +78,11 @@ export async function launchApp(id){
   launching=true;
   const previous=location.href;
   try{
+    // The launcher must relinquish document-level profile handlers before an
+    // embedded app installs its own manager. A home-screen manager must never
+    // listen to a Ciyan profile button.
+    profileUI?.destroy?.();
+    profileUI=null;
     history.replaceState(null,'',appLaunchUrl(previous,id));
     document.title=`${selected.name} v${selected.version}`;
     await loadAppStyle(selected);
@@ -93,7 +98,7 @@ export async function launchApp(id){
     history.replaceState(null,'',launcherUrl(previous));
     document.body.classList.add('launcher-mode');
     document.title='My Workspace';
-    document.querySelector('#app').innerHTML=homeScreen(location.href);
+    renderHome();
     throw error;
   }finally{
     launching=false;
@@ -126,14 +131,20 @@ export async function startLauncher(){
   renderHome();
 }
 
-let profileUI=null;
+let profileUI=null,homeListenerInstalled=false;
 function renderHome(){
   document.title='My Workspace';
   document.body.classList.add('launcher-mode');
   const host=document.querySelector('#app');
   host.innerHTML=homeScreen(location.href);
   // Lazy import: launcher URL utilities remain usable in isolated test/build fixtures.
-  if(!profileUI)void import('./shared-profiles/ui.js').then(m=>{if(!profileUI)profileUI=m.installProfileUI();}).catch(e=>console.warn('Profile UI unavailable:',e));
+  if(!profileUI)void import('./shared-profiles/ui.js').then(m=>{
+    // A user can select an app while the lazy import is in flight. Do not
+    // install a second manager over the embedded app after its navigation.
+    if(!profileUI&&!activeAppId(location.href))profileUI=m.installProfileUI();
+  }).catch(e=>console.warn('Profile UI unavailable:',e));
+  if(homeListenerInstalled)return;
+  homeListenerInstalled=true;
   host.addEventListener('click',event=>{
     const refresh=event.target.closest?.('[data-update-launcher]');
     if(refresh){
