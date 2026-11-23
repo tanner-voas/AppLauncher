@@ -1,8 +1,10 @@
-# AppLauncher v0.1.6
+# AppLauncher v0.1.9
+
+**v0.1.9:** Production releases require every registered app to build and pass integration checks. Validated commits are promoted to the `production` branch; the default build is strict (`python3 build.py`) and `--allow-partial` is for local preview only. Cloudflare must build from `production`. See `docs/RELEASING.md`.
 
 **v0.1.6:** Shared safe-area-aware single-row header, matching update symbol with an animated in-place refresh, and a persistent header while scrolling. See `RELEASE_v0.1.6.md`.
 
-The single installed PWA that currently hosts Ciyan and WorldGen, with support for more independent applications.
+The single installed PWA that hosts Ciyan, WorldGen, and Ascendant, with support for additional independent applications.
 The UI remains v0.8.16's minimal **My Workspace**: one heading, refresh,
 and app tiles. Opening Ciyan preserves its existing Study start page.
 
@@ -26,7 +28,7 @@ the text glyph if the image cannot load. The Cíyán tile is unchanged.
 AppLauncher owns **one** manifest, service worker, and update control. Ciyan
 owns its study data, runtime, reader, dictionaries and saved progress.
 
-## Original v0.1.3 repository setup (historical reference)
+## Original v0.1.3 repository setup (historical reference; not current deployment instructions)
 
 This full repository is based on the supplied AppLauncher v0.1.2 history (its
 `main` tip was `ddbe248`), not the older v0.1.2 snapshot. Both submodules are
@@ -51,7 +53,7 @@ already pinned to the v0.9.0 commit supplied with the launcher. Future Ciyan
 and WorldGen app pushes can advance their pins independently through the
 repository-dispatch workflows.
 
-### Cloudflare Pages
+### Cloudflare Pages (historical)
 
 - Repository: `tanner-voas/AppLauncher`
 - Production branch: `main`
@@ -59,7 +61,7 @@ repository-dispatch workflows.
 - Build command: `python3 build.py`
 - Output directory: `dist`
 
-### Cloudflare Workers Builds
+### Cloudflare Workers Builds (historical; use docs/RELEASING.md)
 
 - Repository: `tanner-voas/AppLauncher`; branch `main`.
 - Build command: `python3 build.py`
@@ -100,15 +102,14 @@ verification. Future apps can follow the same contract.
 
 Each AppLauncher commit locks exact app git SHAs, even with automatic updates.
 No branch is silently fetched during packaging at Cloudflare build time.
-As of v0.1.3, **individual app packaging failures are isolated**: the launcher
+As of v0.1.3, local preview builds support **isolating individual app packaging failures** via `python3 build.py --allow-partial`: the launcher
 still produces a valid bundle, its successful apps stay available, and the
 failed app remains listed as a gray, disabled `BUILD FAILED` tile. Only its
 own packaged assets are excluded from precaching. Failures in the launcher
 itself (invalid registry, corrupted host assets, etc.) remain fatal. The
 external Git host must still fetch the AppLauncher repository itself. App
 submodule checkout is deferred to `build.py`, which catches failures per app.
-The per-app update workflows initialize only their own submodule, so a failure
-fetching a different app does not block an unrelated update.
+Production workflows initialize all submodules, run all app tests and the combined launcher tests, then promote only verified commits.
 
 **WorldGen v0.1.0** is integrated as `apps/worldgen` using its own independent
 repository. It packages a standalone PWA separately. Its interactive first

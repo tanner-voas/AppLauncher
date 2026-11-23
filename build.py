@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Build AppLauncher from pinned submodules, isolating individual app failures.
+"""Strict AppLauncher release build from pinned submodules.
 
-A broken/unavailable app is rendered as a disabled tile with FAILED status;
-all other apps and the host PWA continue to build and deploy. Configuration
-and host-shell failures remain fatal. See README for failure isolation policy.
+The default is fail-closed for production. Use --allow-partial deliberately
+for local previews with disabled tiles; never use it for deployment.
 """
 from __future__ import annotations
 import hashlib
@@ -109,7 +108,29 @@ def package_app(app):
             raise
     return version
 
-def build():
+def git_output(*args, cwd=ROOT):
+    return subprocess.check_output(['git',*args],cwd=cwd,text=True,stderr=subprocess.DEVNULL).strip()
+
+def check_pins(apps):
+    """Validate the exact Git submodule commits, not whatever happens to be checked out."""
+    if not (ROOT/'.git').exists():
+        raise RuntimeError('Strict release requires a Git checkout with pinned submodules')
+    for path in [*(a['source'] for a in apps),'shared/google-drive']:
+        staged=git_output('ls-files','--stage','--',path).splitlines()
+        if len(staged)!=1 or not staged[0].startswith('160000 '):
+            raise RuntimeError(f'Missing pinned Git submodule: {path}')
+        expected=staged[0].split()[1]
+        checkout=git_output('rev-parse','HEAD',cwd=ROOT/path)
+        if expected!=checkout:
+            raise RuntimeError(f'Submodule checkout differs from pinned commit: {path}')
+        if git_output('status','--porcelain','--untracked-files=no',cwd=ROOT/path):
+            raise RuntimeError(f'Submodule has uncommitted tracked changes: {path}')
+    ciyan_shared=git_output('rev-parse','HEAD:shared/google-drive',cwd=ROOT/'apps/ciyan')
+    launcher_shared=git_output('rev-parse','HEAD',cwd=ROOT/'shared/google-drive')
+    if ciyan_shared!=launcher_shared:
+        raise RuntimeError('Launcher and Ciyan have incompatible shared profile library commits')
+
+def build(*,allow_partial=False):
     apps=json.loads((ROOT/'apps.json').read_text(encoding='utf-8'))['apps']
     if not apps:raise ValueError('No apps registered')
     ids=[a['id'] for a in apps]
@@ -118,6 +139,13 @@ def build():
         if not re.fullmatch(r'[a-z][a-z0-9-]*',app['id']):raise ValueError('Invalid app ID')
         for key in ('source','distribution','destination','module','stylesheet','tile_icon'):
             if key in app:safe_rel(app[key])
+    if not allow_partial:
+        if not (ROOT/'.git').exists():
+            raise RuntimeError('Strict release requires a Git checkout with pinned submodules')
+        # Cloudflare may clone only the top-level repository; resolve exact
+        # pinned commits before verifying that they match the source checkouts.
+        subprocess.run(['git','submodule','update','--init','--recursive'],cwd=ROOT,check=True,timeout=240)
+        check_pins(apps)
     if TARGET.exists():shutil.rmtree(TARGET)
     TARGET.mkdir(parents=True)
     for f in HOST_FILES:shutil.copy2(ROOT/f,TARGET/f)
@@ -126,10 +154,13 @@ def build():
     if not source.is_dir():raise RuntimeError('Missing PWA-GoogleDrive submodule')
     shutil.copytree(source,TARGET/'shared-profiles')
     registry=[]
+    provenance=[]
     for app in apps:
         entry={k:app[k] for k in ('id','name','glyph','module','stylesheet')}
         try:
             version=package_app(app)
+            commit=git_output('rev-parse','HEAD',cwd=ROOT/safe_rel(app['source'])) if not allow_partial else None
+            provenance.append({'id':app['id'],'version':version,'commit':commit})
             entry.update(version=version,status='ready')
             if app.get('tile_icon'):
                 entry['icon']='./'+(safe_rel(app['destination'])/safe_rel(app['tile_icon'])).as_posix()
@@ -138,6 +169,11 @@ def build():
             entry.update(version='—',status='failed',reason=safe_failure(exc))
             print(f"  FAILED {app['id']}: {type(exc).__name__}: {exc}",file=sys.stderr)
         registry.append(entry)
+    failed=sum(a['status']=='failed' for a in registry)
+    if failed and not allow_partial:
+        # Refuse to leave a deployable-looking partial bundle behind.
+        shutil.rmtree(TARGET)
+        raise RuntimeError(f'Strict release rejected: {failed} required app(s) failed to build')
     host_version=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))['version']
     (TARGET/'launcher-meta.js').write_text(
         'export const LAUNCHER_VERSION='+json.dumps(host_version)+';\n',encoding='utf-8')
@@ -155,8 +191,22 @@ def build():
     template=(ROOT/'sw.template.js').read_text(encoding='utf-8')
     worker=template.replace('__SHELL_CACHE_NAME__',name).replace('__PRECACHE_ASSETS__',json.dumps(paths,ensure_ascii=False,separators=(',',':')))
     (TARGET/'sw.js').write_text(worker,encoding='utf-8')
-    failed=sum(a['status']=='failed' for a in registry)
+    manifest={
+        'schema':1,'launcherVersion':host_version,
+        'launcherCommit':git_output('rev-parse','HEAD') if not allow_partial else None,
+        'sharedProfilesCommit':git_output('rev-parse','HEAD',cwd=ROOT/'shared/google-drive') if not allow_partial else None,
+        'strict':not allow_partial,'apps':provenance,
+        'shellCache':name,
+        'entrypoints':{entry['id']:{field:{'path':entry[field].removeprefix('./'),'sha256':hashlib.sha256((TARGET/entry[field].removeprefix('./')).read_bytes()).hexdigest()}
+             for field in ('module','stylesheet') if entry.get(field)} for entry in registry if entry['status']=='ready'}
+    }
+    (TARGET/'release-manifest.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n',encoding='utf-8')
     print(f'AppLauncher v{host_version}: {len(apps)-failed} ready, {failed} failed, {len(paths)} precached assets, cache={name}')
     print(f'Cloudflare static bundle: {TARGET}')
 
-if __name__=='__main__':build()
+if __name__=='__main__':
+    import argparse
+    parser=argparse.ArgumentParser(description='Strict AppLauncher release builder')
+    parser.add_argument('--allow-partial',action='store_true',help='Local preview ONLY: show broken apps as disabled tiles')
+    args=parser.parse_args()
+    build(allow_partial=args.allow_partial)

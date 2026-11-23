@@ -1,0 +1,45 @@
+name: Validate and promote production
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [validate-release]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: promote-production
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate every app, build exact pinned release, test integrated launcher
+        run: sh scripts/verify-release.sh
+      - name: Save tested bundle for rollback and inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: launcher-${{ github.run_id }}
+          path: dist/
+          retention-days: 30
+      - name: Promote validated commit to production (fast-forward only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          tested="$(git rev-parse HEAD)"
+          git fetch origin main
+          if [[ "$tested" != "$(git rev-parse FETCH_HEAD)" ]]; then
+            echo 'A newer candidate exists; skip this superseded release'
+            exit 0
+          fi
+          git push origin "$tested:refs/heads/production"
+          echo "Promoted $tested to production"

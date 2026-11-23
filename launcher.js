@@ -171,6 +171,8 @@ function renderHome(){
 // Testable pure URL helpers; side effects only start on this page's normal load.
 if(typeof document!=='undefined'&&document.querySelector('#app')){
   void startLauncher().catch(error=>{
-    document.querySelector('#app').innerHTML=`<div class="loading-state"><h2>App failed to open</h2><p>${String(error?.message||error)}</p><a class="btn btn-secondary" href="${launcherUrl(location.href)}">Return to My Workspace</a></div>`;
+    const root=document.querySelector('#app');
+    root.innerHTML=`<div class="loading-state"><h2>App failed to open</h2><p class="launch-error-message"></p><a class="btn btn-secondary" href="${launcherUrl(location.href)}">Return to My Workspace</a></div>`;
+    root.querySelector('.launch-error-message').textContent=String(error?.message||error);
   });
 }

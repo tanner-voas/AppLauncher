@@ -17,9 +17,14 @@ jobs:
         with:
           submodules: false
           persist-credentials: true
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Advance pinned Ascendant commit
         env:
           EXPECTED_SHA: ${{ github.event.client_payload.sha }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -36,5 +41,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add apps/ascendant
+          # Validate the staged candidate before creating or publishing the commit.
+          sh scripts/verify-release.sh
           git commit -m "build: update Ascendant submodule to ${ACTUAL_SHA:0:12}"
           git push origin HEAD:main
+          gh api -X POST "repos/$GITHUB_REPOSITORY/dispatches" -f event_type=validate-release
