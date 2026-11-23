@@ -1,4 +1,6 @@
-# AppLauncher v0.1.9
+# AppLauncher v0.1.10
+
+**v0.1.10:** Stale-dependency release guard and scheduled Ciyan reconciliation. Fixes launcher packaging an older Ciyan after a missed update notification. Strict builds remove any old `dist/` before validation.
 
 **v0.1.9:** Production releases require every registered app to build and pass integration checks. Validated commits are promoted to the `production` branch; the default build is strict (`python3 build.py`) and `--allow-partial` is for local preview only. Cloudflare must build from `production`. See `docs/RELEASING.md`.
 

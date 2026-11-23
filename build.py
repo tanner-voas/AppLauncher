@@ -131,6 +131,8 @@ def check_pins(apps):
         raise RuntimeError('Launcher and Ciyan have incompatible shared profile library commits')
 
 def build(*,allow_partial=False):
+    # Discard any old deployable artifact before inspecting release inputs.
+    if TARGET.exists():shutil.rmtree(TARGET)
     apps=json.loads((ROOT/'apps.json').read_text(encoding='utf-8'))['apps']
     if not apps:raise ValueError('No apps registered')
     ids=[a['id'] for a in apps]
@@ -146,7 +148,6 @@ def build(*,allow_partial=False):
         # pinned commits before verifying that they match the source checkouts.
         subprocess.run(['git','submodule','update','--init','--recursive'],cwd=ROOT,check=True,timeout=240)
         check_pins(apps)
-    if TARGET.exists():shutil.rmtree(TARGET)
     TARGET.mkdir(parents=True)
     for f in HOST_FILES:shutil.copy2(ROOT/f,TARGET/f)
     shutil.copytree(ROOT/'icons',TARGET/'icons')
@@ -209,4 +210,9 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description='Strict AppLauncher release builder')
     parser.add_argument('--allow-partial',action='store_true',help='Local preview ONLY: show broken apps as disabled tiles')
     args=parser.parse_args()
-    build(allow_partial=args.allow_partial)
+    try:
+        build(allow_partial=args.allow_partial)
+    except BaseException:
+        # No incomplete or stale bundle survives a failed build invocation.
+        shutil.rmtree(TARGET,ignore_errors=True)
+        raise

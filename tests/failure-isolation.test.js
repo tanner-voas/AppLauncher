@@ -21,11 +21,6 @@ test('a failed app and absent submodule do not block a healthy app or service wo
   fs.writeFileSync(path.join(temp,'apps.json'),JSON.stringify({apps:[app('good'),app('broken'),app('missing')]}));
   fakeApp(temp,'good');fakeApp(temp,'broken',true);
   const output=execFileSync('python3',['build.py','--allow-partial'],{cwd:temp,encoding:'utf8',stdio:['ignore','pipe','pipe']});
-  // Production mode must fail closed, even though preview mode tolerates failures.
-  const strict=await import('node:child_process').then(m=>m.spawnSync('python3',['build.py'],{cwd:temp,encoding:'utf8'}));
-  assert.notEqual(strict.status,0);
-  assert.match(strict.stderr,/Strict release|pinned Git/);
-
   assert.match(output,/1 ready, 2 failed/);
   const registry=fs.readFileSync(path.join(temp,'dist/apps-registry.js'),'utf8');
   assert.match(registry,/"id":"good".*"status":"ready"/);
@@ -44,6 +39,12 @@ test('a failed app and absent submodule do not block a healthy app or service wo
   assert.match(html,/launcher-tile-failed/);
   assert.doesNotMatch(html,/data-launch-app="broken"/);
   assert.throws(()=>appLaunchUrl('https://example.org/','broken'),/unavailable/);
+  // A failed strict build must fail AND remove any preexisting preview dist.
+  // Deploying a leftover preview after a failed production preflight is unsafe.
+  const strict=await import('node:child_process').then(m=>m.spawnSync('python3',['build.py'],{cwd:temp,encoding:'utf8'}));
+  assert.notEqual(strict.status,0);
+  assert.match(strict.stderr,/Strict release|pinned Git/);
+  assert.equal(fs.existsSync(path.join(temp,'dist')),false);
  }finally{fs.rmSync(temp,{recursive:true,force:true});}
 });
 

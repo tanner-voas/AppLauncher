@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Require current upstream application commits
+        run: sh scripts/check-upstream-pins.sh
       - name: Validate every app, build exact pinned release, test integrated launcher
         run: sh scripts/verify-release.sh
       - name: Save tested bundle for rollback and inspection
@@ -41,5 +43,7 @@ jobs:
             echo 'A newer candidate exists; skip this superseded release'
             exit 0
           fi
+          # Recheck at promotion time; upstream can advance during the tests.
+          sh scripts/check-upstream-pins.sh
           git push origin "$tested:refs/heads/production"
           echo "Promoted $tested to production"

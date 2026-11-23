@@ -3,6 +3,10 @@ on:
   repository_dispatch:
     types: [ciyan-updated]
   workflow_dispatch:
+  # A missed or failed repository_dispatch must not leave Ciyan permanently stale.
+  # The normal Ciyan release notification remains the fast path.
+  schedule:
+    - cron: '*/15 * * * *'
 permissions:
   contents: write
 concurrency:
