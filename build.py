@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent
 TARGET=ROOT/'dist'
-RESERVED={'index.html','launcher.js','apps-registry.js','launcher-meta.js','pwa-update.js',
+RESERVED={'shared-profiles','worker.js','index.html','launcher.js','apps-registry.js','launcher-meta.js','pwa-update.js',
           'viewport-lock.js','sw.js','manifest.webmanifest','_headers','workspace.css'}
 HOST_FILES=['index.html','launcher.js','workspace.css','pwa-update.js',
             'viewport-lock.js','manifest.webmanifest','_headers']
@@ -48,6 +48,11 @@ def safe_failure(exc):
 def package_app(app):
     source=ROOT/safe_rel(app['source'])
     prepare_submodule(source)
+    # Ciyan pins the same shared library as its own nested submodule. Ensure
+    # Cloudflare builds have initialized it even when they only cloned depth 1.
+    if app['id']=='ciyan' and (source/'.git').exists():
+        subprocess.run(['git','submodule','update','--init','--recursive'],cwd=source,
+                       check=True,timeout=150)
     subprocess.run([sys.executable,'package.py'],cwd=source,check=True,timeout=300)
     assets=source/safe_rel(app.get('distribution',f'dist/{app["id"]}'))
     if not assets.is_dir():raise RuntimeError('Missing app distribution')
@@ -117,6 +122,9 @@ def build():
     TARGET.mkdir(parents=True)
     for f in HOST_FILES:shutil.copy2(ROOT/f,TARGET/f)
     shutil.copytree(ROOT/'icons',TARGET/'icons')
+    source=ROOT/'shared'/'google-drive'/'src'
+    if not source.is_dir():raise RuntimeError('Missing PWA-GoogleDrive submodule')
+    shutil.copytree(source,TARGET/'shared-profiles')
     registry=[]
     for app in apps:
         entry={k:app[k] for k in ('id','name','glyph','module','stylesheet')}

@@ -1,4 +1,5 @@
 import {runUpdateButton} from './pwa-update.js';
+const profileButton='<button type="button" class="pwa-profile-button" data-pwa-profile-button aria-label="Manage profile" title="Manage profile"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-5 3.2-8 7.5-8s7.5 3 7.5 8"/></svg></button>';
 import {APPS} from './apps-registry.js';
 import {LAUNCHER_VERSION} from './launcher-meta.js';
 
@@ -30,7 +31,7 @@ export function homeScreen(current){
     return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span></a>`;
   }).join('');
   return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">My Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
-    <button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
+    ${profileButton}<button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
     </button></header>
     <nav class="launcher-grid" aria-label="Applications">${tiles}</nav>
@@ -111,6 +112,7 @@ function registerWorker(){
 
 export async function startLauncher(){
   registerWorker();
+
   const id=activeAppId(location.href);
   if(id){
     const selected=APPS.find(app=>app.id===id);
@@ -124,11 +126,14 @@ export async function startLauncher(){
   renderHome();
 }
 
+let profileUI=null;
 function renderHome(){
   document.title='My Workspace';
   document.body.classList.add('launcher-mode');
   const host=document.querySelector('#app');
   host.innerHTML=homeScreen(location.href);
+  // Lazy import: launcher URL utilities remain usable in isolated test/build fixtures.
+  if(!profileUI)void import('./shared-profiles/ui.js').then(m=>{if(!profileUI)profileUI=m.installProfileUI();}).catch(e=>console.warn('Profile UI unavailable:',e));
   host.addEventListener('click',event=>{
     const refresh=event.target.closest?.('[data-update-launcher]');
     if(refresh){

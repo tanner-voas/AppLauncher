@@ -70,3 +70,7 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 .launcher-brand-icon{width:39px;height:39px;flex:0 0 39px;border-radius:12px;display:block}
 .launcher-workspace-title{display:flex;align-items:baseline;flex-wrap:nowrap;gap:6px;white-space:nowrap;font-size:clamp(19px,5vw,28px);letter-spacing:-.7px}
 .launcher-workspace-title .launcher-version{font-size:10px;letter-spacing:0;white-space:nowrap}
+/* v0.1.7: shared profile control beside the far-right refresh control. */
+.launcher-header .pwa-profile-button{margin-left:auto;background:var(--paper);border:1px solid var(--stroke);color:var(--ink);width:42px;height:42px;flex:0 0 42px;border-radius:14px}
+.launcher-header{gap:8px}.launcher-header .launcher-heading{margin-right:auto}
+@media(max-width:390px){.launcher-workspace-title{font-size:18px}.launcher-brand-icon{width:34px;height:34px;flex-basis:34px}}

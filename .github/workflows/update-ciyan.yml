@@ -1,16 +1,13 @@
-name: Update Ciyan submodule
+name: Update Ciyan and shared Google Drive pointers
 on:
   repository_dispatch:
     types: [ciyan-updated]
   workflow_dispatch:
-
 permissions:
   contents: write
-
 concurrency:
   group: update-app-submodules
   cancel-in-progress: false
-
 jobs:
   advance-ciyan:
     runs-on: ubuntu-latest
@@ -19,24 +16,31 @@ jobs:
         with:
           submodules: false
           persist-credentials: true
-      - name: Advance pinned Ciyan commit
+      - name: Advance Ciyan and align shared profile library in ONE commit
         env:
-          EXPECTED_SHA: ${{ github.event.client_payload.sha }}
+          NOTIFIED_SHA: ${{ github.event.client_payload.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          git submodule update --init -- apps/ciyan
+          git submodule update --init -- apps/ciyan shared/google-drive
           git -C apps/ciyan fetch origin main
-          ACTUAL_SHA="$(git -C apps/ciyan rev-parse FETCH_HEAD)"
-          if [[ -n "$EXPECTED_SHA" && "$EXPECTED_SHA" != "$ACTUAL_SHA" ]]; then
-            echo "Newer Ciyan commit $ACTUAL_SHA supersedes notification for $EXPECTED_SHA"
+          CIYAN_SHA="$(git -C apps/ciyan rev-parse FETCH_HEAD)"
+          if [[ -n "$NOTIFIED_SHA" && "$NOTIFIED_SHA" != "$CIYAN_SHA" ]]; then
+            echo "Newer Ciyan $CIYAN_SHA supersedes $NOTIFIED_SHA"
           fi
-          git -C apps/ciyan checkout --detach "$ACTUAL_SHA"
-          if git diff --quiet -- apps/ciyan; then
-            echo "Submodule already up to date"; exit 0
+          git -C apps/ciyan checkout --detach "$CIYAN_SHA"
+          # Use the Ciyan gitlink, never race a second independent shared update.
+          SHARED_SHA="$(git -C apps/ciyan rev-parse 'HEAD:shared/google-drive')"
+          git -C shared/google-drive fetch origin main
+          if ! git -C shared/google-drive cat-file -e "$SHARED_SHA^{commit}"; then
+            git -C shared/google-drive fetch origin "$SHARED_SHA"
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/ciyan
-          git commit -m "build: update Ciyan submodule to ${ACTUAL_SHA:0:12}"
+          git -C shared/google-drive checkout --detach "$SHARED_SHA"
+          if git diff --quiet -- apps/ciyan shared/google-drive; then
+            echo 'Both dependency pointers are already aligned'; exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/ciyan shared/google-drive
+          git commit -m "build: align Ciyan ${CIYAN_SHA:0:12} and profiles ${SHARED_SHA:0:12}"
           git push origin HEAD:main

@@ -16,7 +16,7 @@ function fakeApp(dir,name,fails=false){
 test('a failed app and absent submodule do not block a healthy app or service worker',async()=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'wg-launcher-test-'));
  try{
-  for(const p of ['build.py','index.html','launcher.js','workspace.css','pwa-update.js','viewport-lock.js','sw.template.js','manifest.webmanifest','_headers','package.json','icons'])copy(p,temp);
+  for(const p of ['build.py','index.html','launcher.js','workspace.css','pwa-update.js','viewport-lock.js','sw.template.js','manifest.webmanifest','_headers','package.json','icons','shared/google-drive/src'])copy(p,temp);
   const app=name=>({id:name,name, glyph:name[0],source:`apps/${name}`,destination:`apps/${name}`,distribution:`dist/${name}`,module:`./apps/${name}/app.js`,stylesheet:`./apps/${name}/styles.css`});
   fs.writeFileSync(path.join(temp,'apps.json'),JSON.stringify({apps:[app('good'),app('broken'),app('missing')]}));
   fakeApp(temp,'good');fakeApp(temp,'broken',true);
@@ -45,7 +45,7 @@ test('a failed app and absent submodule do not block a healthy app or service wo
 test('tile artwork is copied from the source app and missing artwork fails only that app',()=>{
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'wg-launcher-art-test-'));
  try{
-  for(const p of ['build.py','index.html','launcher.js','workspace.css','pwa-update.js','viewport-lock.js','sw.template.js','manifest.webmanifest','_headers','package.json','icons'])copy(p,temp);
+  for(const p of ['build.py','index.html','launcher.js','workspace.css','pwa-update.js','viewport-lock.js','sw.template.js','manifest.webmanifest','_headers','package.json','icons','shared/google-drive/src'])copy(p,temp);
   const app=name=>({id:name,name,glyph:'◇',source:`apps/${name}`,destination:`apps/${name}`,distribution:`dist/${name}`,module:`./apps/${name}/app.js`,stylesheet:`./apps/${name}/styles.css`,tile_icon:'icons/icon-192.png'});
   fs.writeFileSync(path.join(temp,'apps.json'),JSON.stringify({apps:[app('art'),app('missing-art')]}));
   fakeApp(temp,'art');fakeApp(temp,'missing-art');
