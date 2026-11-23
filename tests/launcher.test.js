@@ -73,7 +73,7 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
 
 test('service worker generates a unique content hash and caches the launcher and app',()=>{
   const script=read('sw.js');
-  assert.match(script,/app-launcher-shell-v0\.1\.5-[a-f0-9]{16}/);
+  assert.match(script,/app-launcher-shell-v0\.1\.6-[a-f0-9]{16}/);
   assert.match(script,/"\.\/index\.html"/);
   if(APPS[0].version!=='0.8.16')assert.match(script,/"\.\/app-host-bridge\.js"/);
   assert.match(script,/"\.\/master-data\.js"/);

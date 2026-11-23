@@ -56,3 +56,17 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 .launcher-tile-failed:active{transform:none}
 .launcher-tile-failure{font-size:10px;color:#ae554c;font-weight:770;letter-spacing:.04em;white-space:nowrap}
 .launcher-build-warning{margin-top:19px;color:#8b5950;font-size:12px;line-height:1.5;max-width:450px}
+
+/* v0.1.6 — anchored single-row header, iPhone safe area and in-place updater. */
+.launcher-header{position:sticky;top:calc(12px + env(safe-area-inset-top));z-index:15;padding:12px 0 14px;background:var(--cream);min-width:0}
+.launcher-screen{padding-top:calc(25px + env(safe-area-inset-top))}
+.launcher-refresh{flex:0 0 42px;width:42px;height:42px;min-width:42px;min-height:42px}
+.launcher-refresh:disabled{min-width:42px;padding:0;opacity:1}
+.pwa-updating .ico{animation:launcher-header-spin .85s linear infinite;transform-origin:center}
+@keyframes launcher-header-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.pwa-updating .ico{animation-duration:2s}}
+
+.launcher-header .launcher-heading{flex-direction:row;align-items:center;gap:10px}
+.launcher-brand-icon{width:39px;height:39px;flex:0 0 39px;border-radius:12px;display:block}
+.launcher-workspace-title{display:flex;align-items:baseline;flex-wrap:nowrap;gap:6px;white-space:nowrap;font-size:clamp(19px,5vw,28px);letter-spacing:-.7px}
+.launcher-workspace-title .launcher-version{font-size:10px;letter-spacing:0;white-space:nowrap}

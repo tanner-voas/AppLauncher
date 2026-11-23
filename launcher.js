@@ -2,7 +2,7 @@ import {runUpdateButton} from './pwa-update.js';
 import {APPS} from './apps-registry.js';
 import {LAUNCHER_VERSION} from './launcher-meta.js';
 
-// AppLauncher v0.1.5: first-party app tile imagery, with glyph fallback.
+// AppLauncher v0.1.6: first-party app tile imagery, with glyph fallback.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
 // Add future entries here, with their own modules and storage namespaces.
 export function launcherUrl(current){return new URL('./',current).href;}
@@ -29,7 +29,7 @@ export function homeScreen(current){
     if(failed)return `<button type="button" class="launcher-tile launcher-tile-failed" disabled aria-label="${name} unavailable: build failed" title="${escapeHtml(app.reason||'App build failed')}">${common}<span class="launcher-tile-failure">BUILD FAILED</span></button>`;
     return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span></a>`;
   }).join('');
-  return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><span class="launcher-version">v${LAUNCHER_VERSION}</span><h1 class="launcher-workspace-title">My Workspace</h1></div>
+  return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">My Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
     <button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
     </button></header>

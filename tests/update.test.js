@@ -38,3 +38,20 @@ test('launcher owns pinch zoom lock but retains single-finger scrolling',()=>{
  event.touches.push({});listener.get('touchmove').fn(event);assert.equal(prevented,1);
  assert.equal(listener.get('touchmove').opts.passive,false);
 });
+
+test('update indicator keeps its icon while checking and restores it after failure',async()=>{
+ let during='',error='';const classes=new Set();
+ const button={innerHTML:'<svg class="ico"></svg>',disabled:false,
+  classList:{add:key=>classes.add(key),remove:key=>classes.delete(key)},
+  attrs:new Map([['aria-label','Check for updates']]),
+  getAttribute(key){return this.attrs.get(key)??null;},setAttribute(key,value){this.attrs.set(key,value);},removeAttribute(key){this.attrs.delete(key);}};
+ const navigatorRef={onLine:true,serviceWorker:{register:async()=>({waiting:null,installing:null,update:()=>new Promise(()=>{})})}};
+ const promise=runUpdateButton(button,{navigatorRef,timeoutMs:15,onStatus:()=>{during=button.innerHTML;},onError:e=>{error=e;}});
+ assert.equal(classes.has('pwa-updating'),true);
+ assert.equal(await promise,false);
+ assert.equal(during,'<svg class="ico"></svg>');
+ assert.equal(button.innerHTML,during);
+ assert.equal(button.attrs.get('aria-label'),'Check for updates');
+ assert.equal(classes.has('pwa-updating'),false);
+ assert.match(error,/timed out/);
+});

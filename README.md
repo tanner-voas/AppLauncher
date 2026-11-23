@@ -1,4 +1,6 @@
-# AppLauncher v0.1.4
+# AppLauncher v0.1.6
+
+**v0.1.6:** Shared safe-area-aware single-row header, matching update symbol with an animated in-place refresh, and a persistent header while scrolling. See `RELEASE_v0.1.6.md`.
 
 The single installed PWA that currently hosts Ciyan and WorldGen, with support for more independent applications.
 The UI remains v0.8.16's minimal **My Workspace**: one heading, refresh,
