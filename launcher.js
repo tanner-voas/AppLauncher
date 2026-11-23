@@ -138,11 +138,21 @@ function renderHome(){
   const host=document.querySelector('#app');
   host.innerHTML=homeScreen(location.href);
   // Lazy import: launcher URL utilities remain usable in isolated test/build fixtures.
-  if(!profileUI)void import('./shared-profiles/ui.js').then(m=>{
-    // A user can select an app while the lazy import is in flight. Do not
-    // install a second manager over the embedded app after its navigation.
-    if(!profileUI&&!activeAppId(location.href))profileUI=m.installProfileUI();
-  }).catch(e=>console.warn('Profile UI unavailable:',e));
+  if(!profileUI)void Promise.all([
+    import('./shared-profiles/ui.js'),
+    import('./shared-profiles/profiles.js'),
+    import('./shared-profiles/registry-recovery.js')
+  ]).then(async ([ui,profiles,recovery])=>{
+    // The launcher can be replaced by an embedded app while these modules load.
+    // Never install the home-screen manager over Ciyan's own profile manager.
+    if(profileUI||activeAppId(location.href))return;
+    try{profiles.readRegistry();}
+    catch(error){
+      if(await recovery.showRegistryRecovery(host,error))return;
+      throw error;
+    }
+    if(!profileUI&&!activeAppId(location.href))profileUI=ui.installProfileUI();
+  }).catch(error=>console.warn('Profile manager unavailable:',error));
   if(homeListenerInstalled)return;
   homeListenerInstalled=true;
   host.addEventListener('click',event=>{
