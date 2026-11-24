@@ -17,9 +17,9 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 TARGET=ROOT/'dist'
 RESERVED={'shared-profiles','worker.js','index.html','launcher.js','apps-registry.js','launcher-meta.js','pwa-update.js',
-          'viewport-lock.js','sw.js','manifest.webmanifest','_headers','workspace.css'}
+          'viewport-lock.js','sw.js','manifest.webmanifest','_headers','workspace.css','launcher-offline.js','offline-inventory.json','release-manifest.json'}
 HOST_FILES=['index.html','launcher.js','workspace.css','pwa-update.js',
-            'viewport-lock.js','manifest.webmanifest','_headers']
+            'viewport-lock.js','manifest.webmanifest','_headers','launcher-offline.js']
 
 def safe_rel(value):
     p=Path(value)
@@ -130,6 +130,16 @@ def check_pins(apps):
     if ciyan_shared!=launcher_shared:
         raise RuntimeError('Launcher and Ciyan have incompatible shared profile library commits')
 
+def reader_groups(path):
+    # The original archives are also prerequisites of each graded edition.
+    if path.startswith('chapters/') and path.endswith('.zip'):
+        return ['reader:original', 'reader:hsk4', 'reader:hsk5', 'reader:hsk6']
+    for prefix, group in [('chapters/graded-v099-hsk4/', 'reader:hsk4'),
+                          ('chapters/graded-v095-hsk5/', 'reader:hsk5'),
+                          ('chapters/graded-v094/', 'reader:hsk6')]:
+        if path.startswith(prefix): return [group]
+    return None
+
 def build(*,allow_partial=False):
     # Discard any old deployable artifact before inspecting release inputs.
     if TARGET.exists():shutil.rmtree(TARGET)
@@ -180,29 +190,40 @@ def build(*,allow_partial=False):
         'export const LAUNCHER_VERSION='+json.dumps(host_version)+';\n',encoding='utf-8')
     (TARGET/'apps-registry.js').write_text(
         'export const APPS=Object.freeze('+json.dumps(registry,ensure_ascii=False,separators=(',',':'))+');\n',encoding='utf-8')
-    shell=[p for p in sorted(TARGET.rglob('*')) if p.is_file() and p.suffix.lower() in
-           {'.html','.css','.js','.webmanifest','.png','.svg','.woff','.woff2','.ttf','.otf'}]
-    if not shell:raise RuntimeError('No launcher shell files produced')
-    h=hashlib.sha256()
-    for item in shell:
-        h.update(item.relative_to(TARGET).as_posix().encode()+b'\0')
-        h.update(hashlib.sha256(item.read_bytes()).digest())
-    name=f'app-launcher-shell-v{host_version}-{h.hexdigest()[:16]}'
-    paths=['./'+item.relative_to(TARGET).as_posix() for item in shell]
+    assets=[]
+    tile_icons={a['icon'].removeprefix('./') for a in registry if a.get('icon')}
+    shell_names=set(HOST_FILES)|{'launcher-meta.js','apps-registry.js'}
+    for file in sorted(TARGET.rglob('*')):
+        if not file.is_file() or file.name=='_headers':continue
+        path=file.relative_to(TARGET).as_posix()
+        if path in shell_names or path in tile_icons or path.startswith(('icons/','shared-profiles/')):
+            groups=['shell']
+        else:
+            groups=reader_groups(path)
+            if not groups:
+                owner=next((a['id'] for a in apps if a['destination']!='.' and path.startswith(a['destination'].rstrip('/')+'/')), 'ciyan')
+                groups=['app:'+owner]
+        data=file.read_bytes()
+        assets.append(dict(path='./'+path,size=len(data),sha256=hashlib.sha256(data).hexdigest(),groups=groups))
+    inventory=json.dumps(assets,ensure_ascii=False,separators=(',',':'))
     template=(ROOT/'sw.template.js').read_text(encoding='utf-8')
-    worker=template.replace('__SHELL_CACHE_NAME__',name).replace('__PRECACHE_ASSETS__',json.dumps(paths,ensure_ascii=False,separators=(',',':')))
+    h=hashlib.sha256(inventory.encode()+template.encode())
+    name=f'app-launcher-shell-v{host_version}-{h.hexdigest()[:16]}'
+    worker=template.replace('__SHELL_CACHE_NAME__',name).replace('__PRECACHE_ASSETS__',inventory)
     (TARGET/'sw.js').write_text(worker,encoding='utf-8')
+    (TARGET/'offline-inventory.json').write_text(inventory+'\n',encoding='utf-8')
+    required=[a for a in assets if 'shell' in a['groups']]
     manifest={
         'schema':1,'launcherVersion':host_version,
         'launcherCommit':git_output('rev-parse','HEAD') if not allow_partial else None,
         'sharedProfilesCommit':git_output('rev-parse','HEAD',cwd=ROOT/'shared/google-drive') if not allow_partial else None,
         'strict':not allow_partial,'apps':provenance,
-        'shellCache':name,
+        'shellCache':name,'offline':{'requiredAssets':len(required),'requiredBytes':sum(a['size'] for a in required),'totalAssets':len(assets),'totalBytes':sum(a['size'] for a in assets)},
         'entrypoints':{entry['id']:{field:{'path':entry[field].removeprefix('./'),'sha256':hashlib.sha256((TARGET/entry[field].removeprefix('./')).read_bytes()).hexdigest()}
              for field in ('module','stylesheet') if entry.get(field)} for entry in registry if entry['status']=='ready'}
     }
     (TARGET/'release-manifest.json').write_text(json.dumps(manifest,sort_keys=True,indent=2)+'\n',encoding='utf-8')
-    print(f'AppLauncher v{host_version}: {len(apps)-failed} ready, {failed} failed, {len(paths)} precached assets, cache={name}')
+    print(f'AppLauncher v{host_version}: {len(apps)-failed} ready, {failed} failed, {len(required)} mandatory / {len(assets)} available offline assets, cache={name}')
     print(f'Cloudflare static bundle: {TARGET}')
 
 if __name__=='__main__':

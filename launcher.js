@@ -1,4 +1,5 @@
 import {runUpdateButton} from './pwa-update.js';
+import {offlineRequest} from './launcher-offline.js';
 const profileButton='<button type="button" class="pwa-profile-button" data-pwa-profile-button aria-label="Manage profile" title="Manage profile"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-5 3.2-8 7.5-8s7.5 3 7.5 8"/></svg></button>';
 import {APPS} from './apps-registry.js';
 import {LAUNCHER_VERSION} from './launcher-meta.js';
@@ -28,7 +29,7 @@ export function homeScreen(current){
       ?`<img src="${escapeHtml(app.icon)}" alt="" decoding="async" draggable="false">`:'';
     const common=`<span class="launcher-tile-icon${artwork?' launcher-tile-icon-art':''}" aria-hidden="true">${glyph}${artwork}</span><span class="launcher-tile-name">${name}</span>`;
     if(failed)return `<button type="button" class="launcher-tile launcher-tile-failed" disabled aria-label="${name} unavailable: build failed" title="${escapeHtml(app.reason||'App build failed')}">${common}<span class="launcher-tile-failure">BUILD FAILED</span></button>`;
-    return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span></a>`;
+    return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span><small class="launcher-offline-state" data-offline-app="${id}"></small></a>`;
   }).join('');
   return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">My Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
     ${profileButton}<button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
@@ -63,7 +64,7 @@ export function loadAppStyle(app){
     const link=document.createElement('link');
     link.rel='stylesheet';link.href=app.stylesheet;
     link.onload=resolve;
-    link.onerror=()=>reject(new Error(`Failed to load ${app.name} styles`));
+    link.onerror=()=>{loadedStyles.delete(app.stylesheet);link.remove();reject(new Error(`Failed to load ${app.name} styles`));};
     document.head.append(link);
   });
   loadedStyles.set(app.stylesheet,promise);
@@ -85,13 +86,14 @@ export async function launchApp(id){
     profileUI=null;
     history.replaceState(null,'',appLaunchUrl(previous,id));
     document.title=`${selected.name} v${selected.version}`;
-    await loadAppStyle(selected);
-    installHostApi();
     document.body.classList.remove('launcher-mode');
     const splashArt=selected.icon
       ?`<img src="${escapeHtml(selected.icon)}" alt="" draggable="false">`
       :escapeHtml(selected.glyph);
     document.querySelector('#app').innerHTML=`<div class="loading-state"><div class="brand-mark${selected.icon?' brand-mark-art':''}">${splashArt}</div><div class="loading-spinner"></div><p>Opening ${escapeHtml(selected.name)}…</p></div>`;
+    await prepareAppOffline(selected);
+    await loadAppStyle(selected);
+    installHostApi();
     // The app module is loaded only after selecting its tile.
     await import(selected.module);
   }catch(error){
@@ -105,6 +107,22 @@ export async function launchApp(id){
   }
 }
 
+async function prepareAppOffline(app){
+  if(!navigator.serviceWorker)return;
+  try{
+    const groups=await offlineRequest('status');
+    const pack=groups.find(g=>g.group==='app:'+app.id);
+    if(pack&&!pack.complete){
+      await offlineRequest('download',pack.group,(done,total)=>{
+        const status=document.querySelector('.loading-state p');
+        if(status)status.textContent=`Preparing ${app.name} for offline use (${done}/${total})…`;
+      });
+    }
+  }catch(error){
+    if(navigator.onLine===false)throw Error(`${app.name} is not fully downloaded. Connect and open it once.`);
+    console.warn('Offline preparation unavailable:',error);
+  }
+}
 function registerWorker(){
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
     const worker=navigator.serviceWorker;
@@ -123,6 +141,7 @@ export async function startLauncher(){
     const selected=APPS.find(app=>app.id===id);
     if(selected.status==='failed'){history.replaceState(null,'',launcherUrl(location.href));return renderHome();}
     document.title=`${selected.name} v${selected.version}`;
+    await prepareAppOffline(selected);
     await loadAppStyle(selected);
     installHostApi();
     await import(selected.module);
@@ -137,6 +156,12 @@ function renderHome(){
   document.body.classList.add('launcher-mode');
   const host=document.querySelector('#app');
   host.innerHTML=homeScreen(location.href);
+  if(navigator.serviceWorker)void offlineRequest('status').then(groups=>{
+    for(const g of groups.filter(x=>x.group.startsWith('app:'))){
+      const node=host.querySelector(`[data-offline-app="${g.group.slice(4)}"]`);
+      if(node)node.textContent=g.complete?'Offline ready':'Downloads on first open';
+    }
+  }).catch(()=>{});
   // Lazy import: launcher URL utilities remain usable in isolated test/build fixtures.
   if(!profileUI)void Promise.all([
     import('./shared-profiles/ui.js'),

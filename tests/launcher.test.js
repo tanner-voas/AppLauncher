@@ -61,8 +61,8 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
   assert.equal(manifest.name,'AppLauncher — My Workspace');
   assert.equal(manifest.short_name,'Launcher');
   assert.equal(manifest.start_url,'./');
-  assert.match(read('index.html'),/maximum-scale=1, user-scalable=no/);
-  assert.match(read('viewport-lock.js'),/gesturestart/);
+  assert.doesNotMatch(read('index.html'),/maximum-scale|user-scalable=no/);
+  assert.doesNotMatch(read('viewport-lock.js'),/preventDefault|addEventListener/);
   assert.match(read('app.js'),/await loadState\(\)/);
   assert.match(read('app.js'),/await reader.flush\(\)/);
   if(APPS[0].version!=='0.8.16'){
@@ -111,7 +111,7 @@ test('generated service worker preserves Safari navigation response semantics',a
   const ctx={
     URL, Request:class {constructor(url,options){this.url=url;this.cache=options?.cache;}},
     Response:class {constructor(body,options){this.body=body;this.status=options.status;this.headers=options.headers;this.redirected=false;}},
-    caches:{match:async key=>{lookups.push(String(key));return original;}},
+    caches:{open:async()=>({match:async key=>{if(String(key).endsWith('__offline_release_metadata__'))return undefined;lookups.push(String(key));return original;}})},
     fetch:async()=>{throw new Error('should use cached shell')},
     self:{location:{origin:'https://ciyan.example'},registration:{scope:'https://ciyan.example/'},addEventListener:(name,handler)=>handlers[name]=handler}
   };

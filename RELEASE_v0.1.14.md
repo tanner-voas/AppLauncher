@@ -1,0 +1,3 @@
+# AppLauncher v0.1.14 — offline asset tiers
+
+The launcher shell is compulsory; app cores are prepared on first open. Current pack status is derived from actual cached files, and already installed app cores must update successfully before a new shell can activate. Reader content is optional. The service worker validates SHA-256 and size of fetched or reused assets, uses release-specific caches, retains the previous release during activation, and prevents explicit activation while other app windows remain open. Changed optional packs can be refreshed independently; a missing optional file does not block installation. Normal production builds remain strict. Browser zoom is no longer globally disabled. The release coordinator and cloud storage are unchanged.

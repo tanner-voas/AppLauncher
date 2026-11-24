@@ -30,13 +30,10 @@ test('update button restores its controls after a bounded timeout',async()=>{
  assert.match(message,/timed out/);assert.equal(button.disabled,false);assert.equal(button.innerHTML,'<svg></svg>');
 });
 
-test('launcher owns pinch zoom lock but retains single-finger scrolling',()=>{
+test('launcher does not globally prevent pinch or wheel zoom',()=>{
  const listener=new Map();const document={addEventListener:(event,fn,opts)=>listener.set(event,{fn,opts})};
  vm.runInNewContext(fs.readFileSync(new URL('../viewport-lock.js',import.meta.url),'utf8'),{document});
- let prevented=0;const event={touches:[{}],cancelable:true,preventDefault(){prevented++}};
- listener.get('touchmove').fn(event);assert.equal(prevented,0);
- event.touches.push({});listener.get('touchmove').fn(event);assert.equal(prevented,1);
- assert.equal(listener.get('touchmove').opts.passive,false);
+ assert.equal(listener.size,0);
 });
 
 test('update indicator keeps its icon while checking and restores it after failure',async()=>{

@@ -74,3 +74,5 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 .launcher-header .pwa-profile-button{margin-left:auto;background:var(--paper);border:1px solid var(--stroke);color:var(--ink);width:42px;height:42px;flex:0 0 42px;border-radius:14px}
 .launcher-header{gap:8px}.launcher-header .launcher-heading{margin-right:auto}
 @media(max-width:390px){.launcher-workspace-title{font-size:18px}.launcher-brand-icon{width:34px;height:34px;flex-basis:34px}}
+
+.launcher-offline-state{font-size:.7rem;line-height:1.25;opacity:.75;text-align:center;min-width:0;overflow-wrap:anywhere}

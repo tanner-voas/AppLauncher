@@ -38,7 +38,19 @@ def check(path=None):
         assert '"id":"'+app['id']+'"' in registry, 'Absent app in registry: '+app['id']
     assert '"status":"failed"' not in registry, 'Failed app in production registry'
     assert (DIST/'sw.js').is_file() and manifest['shellCache'] in (DIST/'sw.js').read_text()
-    print('PASS: strict production release, 3 app entrypoints, pinned commit provenance and fingerprints')
+    inventory=json.loads((DIST/'offline-inventory.json').read_text())
+    assert len(inventory)==manifest['offline']['totalAssets']
+    assert sum(a['size'] for a in inventory)==manifest['offline']['totalBytes']
+    assert len({a['path'] for a in inventory})==len(inventory)
+    required=[a for a in inventory if 'shell' in a['groups']]
+    assert len(required)==manifest['offline']['requiredAssets']
+    assert sum(a['size'] for a in required)==manifest['offline']['requiredBytes']
+    for item in inventory:
+        path=(DIST/item['path']).resolve()
+        assert path.is_relative_to(DIST.resolve()) and path.is_file(), 'Missing offline asset: '+item['path']
+        data=path.read_bytes()
+        assert len(data)==item['size'] and hashlib.sha256(data).hexdigest()==item['sha256'], 'Invalid offline asset: '+item['path']
+    print('PASS: strict production release, 3 app entrypoints, pinned commit provenance and offline fingerprints')
 
 if __name__=='__main__':
     check(pathlib.Path(sys.argv[1]).resolve() if len(sys.argv)>1 else None)
