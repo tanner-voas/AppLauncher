@@ -1,4 +1,6 @@
-# AppLauncher v0.1.12
+# AppLauncher v0.1.17
+
+**v0.1.17:** Compact header, automatic source-history tags and preserved production promotion.
 
 **v0.1.12:** One release workflow reconciles all app pins, retries concurrent Git changes, and atomically promotes a validated candidate.
 
@@ -11,7 +13,7 @@
 **v0.1.6:** Shared safe-area-aware single-row header, matching update symbol with an animated in-place refresh, and a persistent header while scrolling. See `RELEASE_v0.1.6.md`.
 
 The single installed PWA that hosts Ciyan, WorldGen, and Ascendant, with support for additional independent applications.
-The UI remains v0.8.16's minimal **My Workspace**: one heading, refresh,
+The UI remains v0.8.16's minimal **Workspace**: one heading, refresh,
 and app tiles. Opening Ciyan preserves its existing Study start page.
 
 **v0.1.4:** The WorldGen tile uses WorldGen's own `icons/icon-192.png`

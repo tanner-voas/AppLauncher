@@ -15,7 +15,9 @@ test('v0.1.5 displays host and all three application versions without changing w
   assert.match(APPS[0].version,/^\d+\.\d+\.\d+$/);
   assert.equal(APPS[0].module,'./app.js');
   const html=homeScreen('https://ciyan.example/');
-  assert.match(html,/My Workspace/);
+  assert.match(html,/launcher-workspace-title">Workspace /);
+  assert.match(html,/class="launcher-actions">.*data-show-versions.*data-update-launcher/s);
+  assert.match(read('workspace.css'),/grid-template-columns:minmax\(0,1fr\) auto/);
   assert.equal(LAUNCHER_VERSION,JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8')).version);
   assert.match(html,new RegExp('class=\"launcher-version\">v'+LAUNCHER_VERSION.replaceAll('.','\\.')+'<'));
   assert.match(html,new RegExp('class=\"launcher-tile-version\">v'+APPS[0].version.replaceAll('.','\\.')+'<'));

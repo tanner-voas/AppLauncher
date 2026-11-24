@@ -81,7 +81,17 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 .launcher-info{flex:0 0 42px;width:42px;height:42px;border-radius:14px}
 .launcher-header .launcher-heading{flex:1 1 auto;min-width:0}
 .launcher-workspace-title{white-space:normal;flex-wrap:wrap;gap:2px 6px;overflow-wrap:anywhere}
-.launcher-header{flex-wrap:wrap}
+.launcher-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.launcher-actions{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;flex-shrink:0}
+.launcher-header .launcher-heading{margin:0;min-width:0;gap:8px}
+.launcher-header .pwa-profile-button{margin:0}
+.launcher-workspace-title{min-width:0;display:block;overflow-wrap:anywhere;line-height:1.12}
+.launcher-workspace-title .launcher-version{display:block;margin-top:3px}
+@media(min-width:480px){.launcher-workspace-title .launcher-version{display:inline;margin-left:3px}}
+@media(max-width:390px){.launcher-header{gap:6px}.launcher-actions{gap:4px}.launcher-header .launcher-heading{gap:6px}.launcher-workspace-title{font-size:17px}.launcher-brand-icon{width:30px;height:30px;flex-basis:30px}}
+/* At extremely narrow or heavily magnified widths, keep the controls together
+   in a deliberate second row instead of stranding only the refresh button. */
+@media(max-width:300px){.launcher-header{grid-template-columns:minmax(0,1fr)}.launcher-actions{justify-self:end}}
 .launcher-info-dialog{width:min(92vw,460px);max-height:85dvh;overflow:auto;border:1px solid var(--stroke);border-radius:20px;background:var(--paper);color:var(--ink);padding:20px;box-shadow:var(--shadow)}
 .launcher-info-dialog::backdrop{background:#18312866}
 .launcher-info-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}

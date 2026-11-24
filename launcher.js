@@ -41,10 +41,10 @@ export function homeScreen(current){
     if(failed)return `<button type="button" class="launcher-tile launcher-tile-failed" disabled aria-label="${name} unavailable: build failed" title="${escapeHtml(app.reason||'App build failed')}">${common}<span class="launcher-tile-failure">BUILD FAILED</span></button>`;
     return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span><small class="launcher-offline-state" data-offline-app="${id}"></small></a>`;
   }).join('');
-  return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">My Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
-    ${profileButton}<button type="button" class="launcher-info icon-btn" data-show-versions aria-label="Package versions" title="Package versions"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg></button><button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
+  return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
+    <div class="launcher-actions">${profileButton}<button type="button" class="launcher-info icon-btn" data-show-versions aria-label="Package versions" title="Package versions"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg></button><button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
-    </button></header>
+    </button></div></header>
     <nav class="launcher-grid" aria-label="Applications">${tiles}</nav>
     ${failures.length?`<p class="launcher-build-warning" role="status">${failures.length} app${failures.length===1?'':'s'} could not be built. Unavailable apps are shown in gray; other apps are unaffected.</p>`:''}
     <p class="launcher-error" aria-live="polite"></p>${versionDialog()}</div>`;
@@ -109,7 +109,7 @@ export async function launchApp(id){
   }catch(error){
     history.replaceState(null,'',launcherUrl(previous));
     document.body.classList.add('launcher-mode');
-    document.title='My Workspace';
+    document.title='Workspace';
     renderHome();
     throw error;
   }finally{
@@ -162,7 +162,7 @@ export async function startLauncher(){
 
 let profileUI=null,homeListenerInstalled=false;
 function renderHome(){
-  document.title='My Workspace';
+  document.title='Workspace';
   document.body.classList.add('launcher-mode');
   const host=document.querySelector('#app');
   host.innerHTML=homeScreen(location.href);
@@ -225,7 +225,7 @@ function renderHome(){
 if(typeof document!=='undefined'&&document.querySelector('#app')){
   void startLauncher().catch(error=>{
     const root=document.querySelector('#app');
-    root.innerHTML=`<div class="loading-state"><h2>App failed to open</h2><p class="launch-error-message"></p><a class="btn btn-secondary" href="${launcherUrl(location.href)}">Return to My Workspace</a></div>`;
+    root.innerHTML=`<div class="loading-state"><h2>App failed to open</h2><p class="launch-error-message"></p><a class="btn btn-secondary" href="${launcherUrl(location.href)}">Return to Workspace</a></div>`;
     root.querySelector('.launch-error-message').textContent=String(error?.message||error);
   });
 }

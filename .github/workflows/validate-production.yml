@@ -18,6 +18,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    outputs:
+      validated: ${{ steps.reconcile.outputs.validated }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,3 +43,9 @@ jobs:
           name: launcher-${{ github.run_id }}
           path: dist/
           retention-days: 30
+  tag-main:
+    needs: release
+    if: ${{ always() && needs.release.outputs.validated == 'true' }}
+    uses: tanner-voas/iSH-Scripts/.github/workflows/tag-reusable.yml@v0.1.0
+    with:
+      tool-ref: v0.1.0
