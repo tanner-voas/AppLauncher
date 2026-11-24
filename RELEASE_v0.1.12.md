@@ -1,0 +1,3 @@
+# AppLauncher v0.1.12 — Race-safe release coordination
+
+Fixes the confirmed non-fast-forward push race in both Ciyan 0.9.11 and 0.9.12 updates. All app events, direct main pushes, manual requests, and scheduled checks now enter one all-app reconciliation workflow. Each candidate uses current upstream pins, is committed locally before testing, and is validated before an atomic fast-forward push to main and production. A competing push triggers a fresh reconciliation and full retest, never a force push. Strict builds and freshness checks remain mandatory. A real app failure blocks production. No Ciyan data, UI, or backup behavior changes.

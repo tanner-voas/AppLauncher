@@ -3,16 +3,21 @@ on:
   push:
     branches: [main]
   repository_dispatch:
-    types: [validate-release]
+    types: [ciyan-updated, worldgen-updated, ascendant-updated, validate-release]
   workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
 permissions:
   contents: write
+# All notifications reconcile ALL dependencies. GitHub may replace a pending
+# run with a newer event; this cannot drop an individual application's update.
 concurrency:
-  group: promote-production
+  group: reconcile-production-release
   cancel-in-progress: false
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,27 +28,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Require current upstream application commits
-        run: sh scripts/check-upstream-pins.sh
-      - name: Validate every app, build exact pinned release, test integrated launcher
-        run: sh scripts/verify-release.sh
+      - name: Test release race and fail-closed behavior
+        run: bash tests/release-race.sh
+      - name: Reconcile all app pins, validate and atomically promote
+        id: reconcile
+        shell: bash
+        run: bash scripts/reconcile-release.sh
       - name: Save tested bundle for rollback and inspection
+        if: steps.reconcile.outputs.validated == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: launcher-${{ github.run_id }}
           path: dist/
           retention-days: 30
-      - name: Promote validated commit to production (fast-forward only)
-        shell: bash
-        run: |
-          set -euo pipefail
-          tested="$(git rev-parse HEAD)"
-          git fetch origin main
-          if [[ "$tested" != "$(git rev-parse FETCH_HEAD)" ]]; then
-            echo 'A newer candidate exists; skip this superseded release'
-            exit 0
-          fi
-          # Recheck at promotion time; upstream can advance during the tests.
-          sh scripts/check-upstream-pins.sh
-          git push origin "$tested:refs/heads/production"
-          echo "Promoted $tested to production"

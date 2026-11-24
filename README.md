@@ -1,4 +1,8 @@
-# AppLauncher v0.1.10
+# AppLauncher v0.1.12
+
+**v0.1.12:** One release workflow reconciles all app pins, retries concurrent Git changes, and atomically promotes a validated candidate.
+
+**v0.1.11:** Recoverable profile registry.
 
 **v0.1.10:** Stale-dependency release guard and scheduled Ciyan reconciliation. Fixes launcher packaging an older Ciyan after a missed update notification. Strict builds remove any old `dist/` before validation.
 
@@ -25,7 +29,7 @@ the text glyph if the image cannot load. The Cíyán tile is unchanged.
 - `pwa-update.js`, `sw.template.js`, `viewport-lock.js` — shared PWA lifecycle.
 - `build.py` — combines app bundles with the host, generates the registry and
   content-fingerprinted service worker in `dist/`.
-- `.github/workflows/update-ciyan.yml` and `update-worldgen.yml` — independently update each pinned submodule after an app update dispatch or a manual workflow run.
+- `.github/workflows/validate-production.yml` — reconciles all pinned applications after any app notification, a main push, a scheduled check, or a manual run.
 
 AppLauncher owns **one** manifest, service worker, and update control. Ciyan
 owns its study data, runtime, reader, dictionaries and saved progress.
@@ -92,7 +96,7 @@ python3 -m http.server 8765 --directory dist
    For **new** apps, set `destination` to `apps/<id>` and `module`/`stylesheet`
    to URLs under that directory. **Only Ciyan** uses root URLs for backwards
    compatibility with existing installations.
-3. Add an AppLauncher workflow handling that submodule's dispatch event, and
+3. Extend the common AppLauncher reconciliation workflow and script for the new submodule, and
    a dispatch workflow in the app repository. Add the same kind of PAT secret.
 4. Push AppLauncher to deploy the new tile.
 
