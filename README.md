@@ -139,3 +139,7 @@ commit, recheck production branch/build filters and GitHub App access.
 ### Ascendant (v0.1.5 launcher)
 
 Ascendant is a classless 5v5 tactical battleground prototype with its own repo and standalone PWA. It is loaded only when its tile is selected. It stores roster setup under `ascendant.setup.v1`. Chronicle remains a separate future project and is not registered in the workspace.
+
+## Shared PWA infrastructure
+
+The launcher pins `PWA-Core` in `shared/pwa-core`. Its build copies the shared updater and offline client to the existing published paths, and generates the worker with the same cache namespaces. PWA-Core updates are explicit reviewed pin changes, not automatic upstream-main tracking. The recursive version dialog reports the actual pin. Run `git submodule update --init --recursive` before local builds; strict release validation tests the core as well as all applications.

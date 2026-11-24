@@ -4,7 +4,7 @@ set -eu
 cd "$(dirname "$0")/.."
 # The index records the exact submodule SHAs (including staged updates).
 git submodule update --init --recursive
-for repo in shared/google-drive apps/ciyan apps/worldgen apps/ascendant; do
+for repo in shared/pwa-core shared/google-drive apps/ciyan apps/worldgen apps/ascendant; do
     printf '\n=== Testing %s ===\n' "$repo"
     (cd "$repo" && npm test)
 done

@@ -15,7 +15,12 @@ test('version tree matches exact packaged versions and remains in mandatory offl
   assert.equal(DEPENDENCY_TREE.name,'AppLauncher');
   assert.equal(DEPENDENCY_TREE.version,LAUNCHER_VERSION);
   assert.equal(DEPENDENCY_TREE.commit,manifest.launcherCommit);
-  const [shared,ciyan,worldgen,ascendant]=DEPENDENCY_TREE.dependencies;
+  const [core,shared,ciyan,worldgen,ascendant]=DEPENDENCY_TREE.dependencies;
+  assert.equal(core.name,'PWA-Core');
+  assert.equal(core.version,readPackage('shared/pwa-core').version);
+  assert.match(core.commit,/^[a-f0-9]{40}$/);
+  assert.equal(fs.readFileSync(new URL('../dist/pwa-update.js',import.meta.url),'utf8'),fs.readFileSync(new URL('../shared/pwa-core/src/pwa-update.js',import.meta.url),'utf8'));
+  assert.equal(fs.readFileSync(new URL('../dist/launcher-offline.js',import.meta.url),'utf8'),fs.readFileSync(new URL('../shared/pwa-core/src/offline-request.js',import.meta.url),'utf8'));
   assert.equal(shared.name,'PWA-GoogleDrive');
   assert.equal(shared.version,readPackage('shared/google-drive').version);
   assert.equal(shared.commit,manifest.sharedProfilesCommit);

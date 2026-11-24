@@ -115,7 +115,7 @@ def check_pins(apps):
     """Validate the exact Git submodule commits, not whatever happens to be checked out."""
     if not (ROOT/'.git').exists():
         raise RuntimeError('Strict release requires a Git checkout with pinned submodules')
-    for path in [*(a['source'] for a in apps),'shared/google-drive']:
+    for path in [*(a['source'] for a in apps),'shared/google-drive','shared/pwa-core']:
         staged=git_output('ls-files','--stage','--',path).splitlines()
         if len(staged)!=1 or not staged[0].startswith('160000 '):
             raise RuntimeError(f'Missing pinned Git submodule: {path}')
@@ -137,9 +137,10 @@ def dependency_tree(root, apps, registry, *, strict):
     In strict mode recurse through actual Git links, verifying each checkout.
     A preview without Git can describe available packages but not claim pins.
     """
-    names={'app-launcher':'AppLauncher','pwa-google-drive':'PWA-GoogleDrive'}
+    names={'app-launcher':'AppLauncher','pwa-google-drive':'PWA-GoogleDrive','pwa-core':'PWA-Core'}
     labels={app['source']:('Ciyan' if app['id']=='ciyan' else app['name']) for app in apps}
     labels['shared/google-drive']='PWA-GoogleDrive'
+    labels['shared/pwa-core']='PWA-Core'
     ready={app['id'] for app in registry if app['status']=='ready'}
     def node(directory, label=None, expected=None, root_node=False):
         package_path=directory/'package.json'
@@ -161,9 +162,9 @@ def dependency_tree(root, apps, registry, *, strict):
                 if mode=='160000' and kind=='commit':links.append((path,sha))
         elif root_node:
             # Source-only previews may lack nested checkouts and package metadata.
-            links=[('shared/google-drive',None)]+[(a['source'],None) for a in apps if a['id'] in ready]
+            links=[('shared/pwa-core',None),('shared/google-drive',None)]+[(a['source'],None) for a in apps if a['id'] in ready]
         if root_node:
-            order=['shared/google-drive',*(a['source'] for a in apps)]
+            order=['shared/pwa-core','shared/google-drive',*(a['source'] for a in apps)]
             links.sort(key=lambda item: (order.index(item[0]) if item[0] in order else len(order),item[0]))
         children=[node(directory/safe_rel(path),labels.get(path) if root_node else None,sha) for path,sha in links]
         return {'name':name,'version':package.get('version'),'commit':commit,'dependencies':children}
@@ -197,8 +198,17 @@ def build(*,allow_partial=False):
         # pinned commits before verifying that they match the source checkouts.
         subprocess.run(['git','submodule','update','--init','--recursive'],cwd=ROOT,check=True,timeout=240)
         check_pins(apps)
+    # Import only after the pinned submodule has been initialized. A shallow
+    # Cloudflare checkout must not need a network import at runtime.
+    core=ROOT/'shared/pwa-core'
+    if not (core/'build/offline.py').is_file():raise RuntimeError('Missing PWA-Core submodule')
+    sys.path.insert(0,str(core/'build'))
+    from offline import asset_record,generate_worker
     TARGET.mkdir(parents=True)
-    for f in HOST_FILES:shutil.copy2(ROOT/f,TARGET/f)
+    shared_runtime={'pwa-update.js':'pwa-update.js','launcher-offline.js':'offline-request.js'}
+    for f in HOST_FILES:
+        source=core/'src'/shared_runtime[f] if f in shared_runtime else ROOT/f
+        shutil.copy2(source,TARGET/f)
     shutil.copytree(ROOT/'icons',TARGET/'icons')
     source=ROOT/'shared'/'google-drive'/'src'
     if not source.is_dir():raise RuntimeError('Missing PWA-GoogleDrive submodule')
@@ -244,13 +254,9 @@ def build(*,allow_partial=False):
             if not groups:
                 owner=next((a['id'] for a in apps if a['destination']!='.' and path.startswith(a['destination'].rstrip('/')+'/')), 'ciyan')
                 groups=['app:'+owner]
-        data=file.read_bytes()
-        assets.append(dict(path='./'+path,size=len(data),sha256=hashlib.sha256(data).hexdigest(),groups=groups))
-    inventory=json.dumps(assets,ensure_ascii=False,separators=(',',':'))
-    template=(ROOT/'sw.template.js').read_text(encoding='utf-8')
-    h=hashlib.sha256(inventory.encode()+template.encode())
-    name=f'app-launcher-shell-v{host_version}-{h.hexdigest()[:16]}'
-    worker=template.replace('__SHELL_CACHE_NAME__',name).replace('__PRECACHE_ASSETS__',inventory)
+        assets.append(asset_record(TARGET,file,groups))
+    name,worker,inventory=generate_worker(assets,cache_prefix='app-launcher-shell-',
+        version=host_version,legacy_prefixes=['ciyan-shell-'],excluded_path_prefixes=['/_profiles/'])
     (TARGET/'sw.js').write_text(worker,encoding='utf-8')
     (TARGET/'offline-inventory.json').write_text(inventory+'\n',encoding='utf-8')
     required=[a for a in assets if 'shell' in a['groups']]

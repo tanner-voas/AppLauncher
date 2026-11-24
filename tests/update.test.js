@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {checkForUpdatesAndReload,runUpdateButton} from '../pwa-update.js';
+import {checkForUpdatesAndReload,runUpdateButton} from '../shared/pwa-core/src/pwa-update.js';
 
 test('shared updater does not hang when no update is waiting',async()=>{
  let checks=0,reloads=0;

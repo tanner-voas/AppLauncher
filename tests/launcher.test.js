@@ -85,7 +85,8 @@ test('service worker generates a unique content hash and caches the launcher and
   assert.match(script,/"\.\/apps\/ascendant\/icons\/icon-192\.png"/);
   assert.match(script,/navigationResponse\(result\)/);
   assert.match(script,/new Response\(response\.body/);
-  assert.match(script,/k\.startsWith\('ciyan-shell-'\)/);
+  assert.match(script,/const CACHE_PREFIXES=\["app-launcher-shell-","ciyan-shell-"\]/);
+  assert.match(script,/CACHE_PREFIXES\.some\(prefix=>k\.startsWith\(prefix\)\)/);
   assert.doesNotMatch(script,/ciyan-reader-content|ciyan-user-fonts/);
 });
 
