@@ -33,6 +33,15 @@ def check(path=None):
                 entry=DIST/metadata['path']
                 assert entry.is_file(), 'Missing release entrypoint: '+str(entry)
                 assert hashlib.sha256(entry.read_bytes()).hexdigest()==metadata['sha256'], 'Bad release asset digest: '+str(entry)
+    # Check both public representations against the actual pinned Git tree.
+    sys.path.insert(0,str(ROOT))
+    from build import dependency_tree
+    tree=dependency_tree(ROOT,apps,[],strict=True)
+    assert manifest['dependencyTree']==tree, 'Dependency version tree mismatch'
+    meta_js=(DIST/'launcher-meta.js').read_text(encoding='utf-8')
+    prefix='export const DEPENDENCY_TREE='
+    line=next(line for line in meta_js.splitlines() if line.startswith(prefix))
+    assert json.loads(line[len(prefix):-1])==tree, 'Offline version tree mismatch'
     registry=(DIST/'apps-registry.js').read_text()
     for app in apps:
         assert '"id":"'+app['id']+'"' in registry, 'Absent app in registry: '+app['id']

@@ -130,6 +130,45 @@ def check_pins(apps):
     if ciyan_shared!=launcher_shared:
         raise RuntimeError('Launcher and Ciyan have incompatible shared profile library commits')
 
+
+def dependency_tree(root, apps, registry, *, strict):
+    """Describe each checkout independently; never collapse equal package names.
+
+    In strict mode recurse through actual Git links, verifying each checkout.
+    A preview without Git can describe available packages but not claim pins.
+    """
+    names={'app-launcher':'AppLauncher','pwa-google-drive':'PWA-GoogleDrive'}
+    labels={app['source']:('Ciyan' if app['id']=='ciyan' else app['name']) for app in apps}
+    labels['shared/google-drive']='PWA-GoogleDrive'
+    ready={app['id'] for app in registry if app['status']=='ready'}
+    def node(directory, label=None, expected=None, root_node=False):
+        package_path=directory/'package.json'
+        package=json.loads(package_path.read_text(encoding='utf-8')) if package_path.is_file() else {}
+        name=label or names.get(package.get('name'),package.get('name') or directory.name)
+        commit=None
+        links=[]
+        if strict:
+            commit=git_output('rev-parse','HEAD',cwd=directory)
+            if expected is not None and commit!=expected:
+                raise RuntimeError(f'Dependency checkout differs from its pin: {directory.relative_to(root)}')
+            if not root_node and git_output('status','--porcelain','--untracked-files=no',cwd=directory):
+                raise RuntimeError(f'Dependency checkout has tracked changes: {directory.relative_to(root)}')
+            raw=subprocess.check_output(['git','ls-tree','-r','-z','HEAD'],cwd=directory)
+            for entry in raw.decode('utf-8').split('\0'):
+                if not entry:continue
+                info,path=entry.split('\t',1)
+                mode,kind,sha=info.split()
+                if mode=='160000' and kind=='commit':links.append((path,sha))
+        elif root_node:
+            # Source-only previews may lack nested checkouts and package metadata.
+            links=[('shared/google-drive',None)]+[(a['source'],None) for a in apps if a['id'] in ready]
+        if root_node:
+            order=['shared/google-drive',*(a['source'] for a in apps)]
+            links.sort(key=lambda item: (order.index(item[0]) if item[0] in order else len(order),item[0]))
+        children=[node(directory/safe_rel(path),labels.get(path) if root_node else None,sha) for path,sha in links]
+        return {'name':name,'version':package.get('version'),'commit':commit,'dependencies':children}
+    return node(root,'AppLauncher',root_node=True)
+
 def reader_groups(path):
     # The original archives are also prerequisites of each graded edition.
     if path.startswith('chapters/') and path.endswith('.zip'):
@@ -186,8 +225,10 @@ def build(*,allow_partial=False):
         shutil.rmtree(TARGET)
         raise RuntimeError(f'Strict release rejected: {failed} required app(s) failed to build')
     host_version=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))['version']
+    tree=dependency_tree(ROOT,apps,registry,strict=not allow_partial)
     (TARGET/'launcher-meta.js').write_text(
-        'export const LAUNCHER_VERSION='+json.dumps(host_version)+';\n',encoding='utf-8')
+        'export const LAUNCHER_VERSION='+json.dumps(host_version)+';\n'
+        'export const DEPENDENCY_TREE='+json.dumps(tree,ensure_ascii=False,separators=(',',':'))+';\n',encoding='utf-8')
     (TARGET/'apps-registry.js').write_text(
         'export const APPS=Object.freeze('+json.dumps(registry,ensure_ascii=False,separators=(',',':'))+');\n',encoding='utf-8')
     assets=[]
@@ -217,7 +258,7 @@ def build(*,allow_partial=False):
         'schema':1,'launcherVersion':host_version,
         'launcherCommit':git_output('rev-parse','HEAD') if not allow_partial else None,
         'sharedProfilesCommit':git_output('rev-parse','HEAD',cwd=ROOT/'shared/google-drive') if not allow_partial else None,
-        'strict':not allow_partial,'apps':provenance,
+        'strict':not allow_partial,'apps':provenance,'dependencyTree':tree,
         'shellCache':name,'offline':{'requiredAssets':len(required),'requiredBytes':sum(a['size'] for a in required),'totalAssets':len(assets),'totalBytes':sum(a['size'] for a in assets)},
         'entrypoints':{entry['id']:{field:{'path':entry[field].removeprefix('./'),'sha256':hashlib.sha256((TARGET/entry[field].removeprefix('./')).read_bytes()).hexdigest()}
              for field in ('module','stylesheet') if entry.get(field)} for entry in registry if entry['status']=='ready'}

@@ -76,3 +76,22 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 @media(max-width:390px){.launcher-workspace-title{font-size:18px}.launcher-brand-icon{width:34px;height:34px;flex-basis:34px}}
 
 .launcher-offline-state{font-size:.7rem;line-height:1.25;opacity:.75;text-align:center;min-width:0;overflow-wrap:anywhere}
+
+/* Package versions: keep header actions accessible on narrow/zoomed screens. */
+.launcher-info{flex:0 0 42px;width:42px;height:42px;border-radius:14px}
+.launcher-header .launcher-heading{flex:1 1 auto;min-width:0}
+.launcher-workspace-title{white-space:normal;flex-wrap:wrap;gap:2px 6px;overflow-wrap:anywhere}
+.launcher-header{flex-wrap:wrap}
+.launcher-info-dialog{width:min(92vw,460px);max-height:85dvh;overflow:auto;border:1px solid var(--stroke);border-radius:20px;background:var(--paper);color:var(--ink);padding:20px;box-shadow:var(--shadow)}
+.launcher-info-dialog::backdrop{background:#18312866}
+.launcher-info-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.launcher-info-heading h2{font-size:1.2rem;margin:0}
+.launcher-info-heading button{flex-shrink:0;font-size:1.5rem}
+.launcher-info-note{font-size:.85rem;line-height:1.5;color:var(--muted)}
+.launcher-version-tree,.launcher-version-tree ul{list-style:none;margin:0;padding:0}
+.launcher-version-tree ul{margin-left:8px;padding-left:14px;border-left:1px solid #a8b8af}
+.launcher-version-tree li{position:relative;padding:6px 0}
+.launcher-version-tree ul>li::before{content:'';position:absolute;left:-14px;top:22px;width:10px;border-top:1px solid #a8b8af}
+.launcher-version-node{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;padding:5px 0;overflow-wrap:anywhere;font-size:.95rem}
+.launcher-version-node strong{font-variant-numeric:tabular-nums;font-size:.85rem}
+.launcher-version-node code{flex-basis:100%;font-size:.73rem;color:var(--muted)}

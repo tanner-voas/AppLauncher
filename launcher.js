@@ -2,7 +2,7 @@ import {runUpdateButton} from './pwa-update.js';
 import {offlineRequest} from './launcher-offline.js';
 const profileButton='<button type="button" class="pwa-profile-button" data-pwa-profile-button aria-label="Manage profile" title="Manage profile"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-5 3.2-8 7.5-8s7.5 3 7.5 8"/></svg></button>';
 import {APPS} from './apps-registry.js';
-import {LAUNCHER_VERSION} from './launcher-meta.js';
+import {LAUNCHER_VERSION,DEPENDENCY_TREE} from './launcher-meta.js';
 
 // AppLauncher v0.1.6: first-party app tile imagery, with glyph fallback.
 // Only the selected app's module is imported; going Home unloads its entire runtime.
@@ -18,6 +18,16 @@ export function activeAppId(current){
 }
 
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));}
+// Each dependency is rendered at its own location in the build tree, even
+// when another branch has the same name or a different version of that package.
+export function versionTreeMarkup(tree){
+  const version=tree.version==null?'Version unavailable':`v${escapeHtml(tree.version)}`;
+  const children=tree.dependencies||[];
+  return `<li><div class="launcher-version-node"><span>${escapeHtml(tree.name)}</span><strong>${version}</strong>${tree.commit?`<code title="${escapeHtml(tree.commit)}">${escapeHtml(tree.commit.slice(0,12))}</code>`:''}</div>${children.length?`<ul>${children.map(versionTreeMarkup).join('')}</ul>`:''}</li>`;
+}
+function versionDialog(){
+  return `<dialog class="launcher-info-dialog" data-version-dialog aria-labelledby="launcher-info-title"><div class="launcher-info-heading"><h2 id="launcher-info-title">Package versions</h2><button type="button" class="icon-btn" data-close-versions aria-label="Close package versions" autofocus>×</button></div><p class="launcher-info-note">Versions and commits packaged in this release. Works offline. Server-side deployments may differ.</p><ul class="launcher-version-tree">${versionTreeMarkup(DEPENDENCY_TREE)}</ul></dialog>`;
+}
 export function homeScreen(current){
   const failures=APPS.filter(app=>app.status==='failed');
   const tiles=APPS.map(app=>{
@@ -32,12 +42,12 @@ export function homeScreen(current){
     return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span><small class="launcher-offline-state" data-offline-app="${id}"></small></a>`;
   }).join('');
   return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">My Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
-    ${profileButton}<button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
+    ${profileButton}<button type="button" class="launcher-info icon-btn" data-show-versions aria-label="Package versions" title="Package versions"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg></button><button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
     </button></header>
     <nav class="launcher-grid" aria-label="Applications">${tiles}</nav>
     ${failures.length?`<p class="launcher-build-warning" role="status">${failures.length} app${failures.length===1?'':'s'} could not be built. Unavailable apps are shown in gray; other apps are unaffected.</p>`:''}
-    <p class="launcher-error" aria-live="polite"></p></div>`;
+    <p class="launcher-error" aria-live="polite"></p>${versionDialog()}</div>`;
 }
 
 // Launch inside this document. iOS Home Screen PWAs can hand a normal <a>
@@ -181,6 +191,14 @@ function renderHome(){
   if(homeListenerInstalled)return;
   homeListenerInstalled=true;
   host.addEventListener('click',event=>{
+    const dialog=host.querySelector('[data-version-dialog]');
+    if(event.target.closest?.('[data-show-versions]')){
+      if(dialog&&!dialog.open)dialog.showModal();
+      return;
+    }
+    if(event.target.closest?.('[data-close-versions]')){
+      dialog?.close();return;
+    }
     const refresh=event.target.closest?.('[data-update-launcher]');
     if(refresh){
       event.preventDefault();
