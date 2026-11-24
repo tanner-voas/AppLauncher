@@ -15,7 +15,7 @@ test('version tree matches exact packaged versions and remains in mandatory offl
   assert.equal(DEPENDENCY_TREE.name,'AppLauncher');
   assert.equal(DEPENDENCY_TREE.version,LAUNCHER_VERSION);
   assert.equal(DEPENDENCY_TREE.commit,manifest.launcherCommit);
-  const [core,shared,ciyan,worldgen,ascendant]=DEPENDENCY_TREE.dependencies;
+  const [core,shared,ciyan,worldgen,ascendant,gitmanager]=DEPENDENCY_TREE.dependencies;
   assert.equal(core.name,'PWA-Core');
   assert.equal(core.version,readPackage('shared/pwa-core').version);
   assert.match(core.commit,/^[a-f0-9]{40}$/);
@@ -30,6 +30,7 @@ test('version tree matches exact packaged versions and remains in mandatory offl
   assert.equal(ciyan.dependencies[0].version,readPackage('apps/ciyan/shared/google-drive').version);
   assert.equal(worldgen.version,readPackage('apps/worldgen').version);
   assert.equal(ascendant.version,readPackage('apps/ascendant').version);
+  assert.equal(gitmanager.version,readPackage('apps/gitmanager').version);
   assert.ok(inventory.some(x=>x.path==='./launcher-meta.js'&&x.groups.includes('shell')));
   const html=homeScreen('https://example.org/');
   assert.match(html,/data-show-versions/);

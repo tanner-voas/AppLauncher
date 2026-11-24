@@ -256,7 +256,7 @@ def build(*,allow_partial=False):
                 groups=['app:'+owner]
         assets.append(asset_record(TARGET,file,groups))
     name,worker,inventory=generate_worker(assets,cache_prefix='app-launcher-shell-',
-        version=host_version,legacy_prefixes=['ciyan-shell-'],excluded_path_prefixes=['/_profiles/','/_translation/'])
+        version=host_version,legacy_prefixes=['ciyan-shell-'],excluded_path_prefixes=['/_profiles/','/_translation/','/_git/','/_git-runner/'])
     (TARGET/'sw.js').write_text(worker,encoding='utf-8')
     (TARGET/'offline-inventory.json').write_text(inventory+'\n',encoding='utf-8')
     required=[a for a in assets if 'shell' in a['groups']]

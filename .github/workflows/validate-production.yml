@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   repository_dispatch:
-    types: [ciyan-updated, worldgen-updated, ascendant-updated, validate-release]
+    types: [ciyan-updated, worldgen-updated, ascendant-updated, gitmanager-updated, validate-release]
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'

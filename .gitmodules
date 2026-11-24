@@ -16,3 +16,7 @@
 [submodule "shared/pwa-core"]
 	path = shared/pwa-core
 	url = https://github.com/tanner-voas/PWA-Core.git
+[submodule "apps/gitmanager"]
+	path = apps/gitmanager
+	url = https://github.com/tanner-voas/PWA-GitManager.git
+	branch = main

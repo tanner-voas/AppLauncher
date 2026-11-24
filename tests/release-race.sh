@@ -18,11 +18,11 @@ make_repo() {
     git -C "$tmp/$1" commit -qm initial
     git -C "$tmp/$1" push -q origin main
 }
-for repo in shared ciyan worldgen ascendant launcher; do make_repo "$repo"; done
+for repo in shared ciyan worldgen ascendant gitmanager launcher; do make_repo "$repo"; done
 git -C "$tmp/ciyan" submodule add -q "$tmp/shared.git" shared/google-drive
 git -C "$tmp/ciyan" commit -qm 'pin shared'
 git -C "$tmp/ciyan" push -q origin main
-for path in apps/ciyan apps/worldgen apps/ascendant shared/google-drive; do
+for path in apps/ciyan apps/worldgen apps/ascendant apps/gitmanager shared/google-drive; do
     repo=${path##*/}; [[ "$repo" != google-drive ]] || repo=shared
     git -C "$tmp/launcher" submodule add -q "$tmp/$repo.git" "$path"
 done
@@ -56,6 +56,7 @@ advance_repo() {
 }
 advance_repo ciyan 'new Ciyan'
 advance_repo worldgen 'new WorldGen'
+advance_repo gitmanager 'new Git Manager'
 touch "$tmp/trigger-race"
 (cd "$tmp/ci" && bash scripts/reconcile-release.sh) > "$tmp/race.log" 2>&1 || { cat "$tmp/race.log"; exit 1; }
 grep -q 'Main advanced during validation' "$tmp/race.log"
@@ -65,6 +66,7 @@ prod=$(git --git-dir="$tmp/launcher.git" rev-parse production)
 [[ $(git --git-dir="$tmp/launcher.git" show "$prod:human.txt") == 'keep this human commit' ]]
 [[ $(git --git-dir="$tmp/launcher.git" rev-parse "$prod:apps/ciyan") == $(git -C "$tmp/ciyan" rev-parse HEAD) ]]
 [[ $(git --git-dir="$tmp/launcher.git" rev-parse "$prod:apps/worldgen") == $(git -C "$tmp/worldgen" rev-parse HEAD) ]]
+[[ $(git --git-dir="$tmp/launcher.git" rev-parse "$prod:apps/gitmanager") == $(git -C "$tmp/gitmanager" rev-parse HEAD) ]]
 [[ $(wc -l < "$tmp/validated") -eq 2 ]]
 [[ $(tail -1 "$tmp/validated") == "$prod" ]]
 echo 'PASS: concurrent human commit preserved, latest multi-app pins validated and promoted'

@@ -32,6 +32,16 @@
       "module": "./apps/ascendant/app.js",
       "stylesheet": "./apps/ascendant/styles.css",
       "tile_icon": "icons/icon-192.png"
+    },
+    {
+      "id": "gitmanager",
+      "name": "Git Manager",
+      "glyph": "⑂",
+      "source": "apps/gitmanager",
+      "distribution": "dist/gitmanager",
+      "destination": "apps/gitmanager",
+      "module": "./apps/gitmanager/app.js",
+      "stylesheet": "./apps/gitmanager/styles.css"
     }
   ]
 }

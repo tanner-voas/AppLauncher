@@ -7,9 +7,9 @@ import {LAUNCHER_VERSION} from '../dist/launcher-meta.js';
 import {homeScreen,appLaunchUrl,activeAppId,launcherUrl,installHostApi} from '../dist/launcher.js';
 
 const read=(f)=>fs.readFileSync(new URL('../dist/'+f,import.meta.url),'utf8');
-test('v0.1.5 displays host and all three application versions without changing workspace structure',()=>{
-  assert.equal(APPS.length,3);
-  assert.deepEqual(APPS.map(a=>a.id),['ciyan','worldgen','ascendant']);
+test('v0.1.5 displays host and all four application versions without changing workspace structure',()=>{
+  assert.equal(APPS.length,4);
+  assert.deepEqual(APPS.map(a=>a.id),['ciyan','worldgen','ascendant','gitmanager']);
   assert.ok(APPS.every(app=>app.status==='ready'));
   assert.equal(APPS[0].id,'ciyan');
   assert.match(APPS[0].version,/^\d+\.\d+\.\d+$/);
@@ -27,6 +27,8 @@ test('v0.1.5 displays host and all three application versions without changing w
   assert.match(html,/data-launch-app="worldgen"/);
   assert.match(html,/WorldGen/);
   assert.match(html,/data-launch-app="ascendant"/);
+  assert.match(html,/data-launch-app="gitmanager"/);
+  assert.ok(fs.existsSync(new URL('../dist/apps/gitmanager/app.js',import.meta.url)));
   assert.equal(APPS[2].icon,'./apps/ascendant/icons/icon-192.png');
   assert.ok(fs.existsSync(new URL('../dist/apps/ascendant/engine.js',import.meta.url)));
   assert.ok(fs.existsSync(new URL('../dist/apps/ascendant/maps.js',import.meta.url)));

@@ -36,7 +36,7 @@ for ((attempt=1; attempt<=max_attempts; attempt++)); do
     git checkout --detach "$base"
     git submodule sync --recursive
     git submodule update --init --recursive
-    for path in apps/ciyan apps/worldgen apps/ascendant; do
+    for path in $(git ls-files --stage apps | awk '$1=="160000"{print $4}'); do
         advance "$path"
     done
     # The shared library must match Ciyan's committed gitlink, not an independently

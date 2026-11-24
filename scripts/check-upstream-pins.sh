@@ -4,7 +4,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 stale=0
-for path in apps/ciyan apps/worldgen apps/ascendant shared/google-drive; do
+for path in $(git ls-files --stage apps | awk '$1=="160000"{print $4}') shared/google-drive; do
     pinned="$(git rev-parse "HEAD:$path")" || exit 1
     # Existing checked-out submodule knows the canonical upstream remote.
     # A failed remote lookup must fail closed, not silently bless a stale pin.

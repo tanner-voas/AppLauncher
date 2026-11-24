@@ -59,7 +59,7 @@ def check(path=None):
         assert path.is_relative_to(DIST.resolve()) and path.is_file(), 'Missing offline asset: '+item['path']
         data=path.read_bytes()
         assert len(data)==item['size'] and hashlib.sha256(data).hexdigest()==item['sha256'], 'Invalid offline asset: '+item['path']
-    print('PASS: strict production release, 3 app entrypoints, pinned commit provenance and offline fingerprints')
+    print(f'PASS: strict production release, {len(apps)} app entrypoints, pinned commit provenance and offline fingerprints')
 
 if __name__=='__main__':
     check(pathlib.Path(sys.argv[1]).resolve() if len(sys.argv)>1 else None)
