@@ -69,7 +69,7 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
   assert.match(read('app.js'),/await reader.flush\(\)/);
   if(APPS[0].version!=='0.8.16'){
     assert.match(read('app.js'),/await returnToLauncher\(\)/);
-    assert.match(read('app-host-bridge.js'),/__APP_LAUNCHER__/);
+    assert.ok(fs.existsSync(new URL('../dist/app-host-bridge.js',import.meta.url)));
   }
 });
 
@@ -92,7 +92,7 @@ test('service worker generates a unique content hash and caches the launcher and
   assert.doesNotMatch(script,/ciyan-reader-content|ciyan-user-fonts/);
 });
 
-test('host API exits Ciyan through a safe history replacement and PWA reload',()=>{
+test('packaged Ciyan host bridge exits through a safe history replacement and PWA reload',async()=>{
   const oldLocation=globalThis.location,oldHistory=globalThis.history,oldHost=globalThis.__APP_LAUNCHER__;
   try {
     let changes=[],reloads=0;
@@ -100,7 +100,12 @@ test('host API exits Ciyan through a safe history replacement and PWA reload',()
     globalThis.history={replaceState(_a,_b,to){changes.push(to);}};
     installHostApi();
     assert.equal(typeof globalThis.__APP_LAUNCHER__.runUpdateButton,'function');
-    globalThis.__APP_LAUNCHER__.returnToLauncher();
+    if(APPS[0].version==='0.8.16')globalThis.__APP_LAUNCHER__.returnToLauncher();
+    else{
+      const bridge=await import('../dist/app-host-bridge.js');
+      assert.equal(bridge.hasLauncherHost(),true);
+      await bridge.returnToLauncher();
+    }
     assert.deepEqual(changes,['https://ciyan.example/']);
     assert.equal(reloads,1);
   }finally {
