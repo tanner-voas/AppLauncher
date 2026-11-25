@@ -1,4 +1,4 @@
-# AppLauncher v0.1.19
+# AppLauncher v0.1.20
 
 **v0.1.17:** Compact header, automatic source-history tags and preserved production promotion.
 
@@ -146,6 +146,6 @@ Ascendant is a classless 5v5 tactical battleground prototype with its own repo a
 
 The launcher pins `PWA-Core` in `shared/pwa-core`. Its build copies the shared updater and offline client to the existing published paths, and generates the worker with the same cache namespaces. PWA-Core updates are explicit reviewed pin changes, not automatic upstream-main tracking. The recursive version dialog reports the actual pin. Run `git submodule update --init --recursive` before local builds; strict release validation tests the core as well as all applications.
 
-## Git Manager (v0.1.19)
+## Git Manager (v0.1.20)
 
 Git Manager is hosted from `apps/gitmanager` and routes `/_git/v1/` to the `pwa-git-api` Worker. The Worker must be deployed first. The launcher does not forward privileged runner callbacks, does not contain GitHub credentials, and excludes Git API requests from its service-worker cache. Release reconciliation discovers all hosted Gitlinks under `apps/`, including the new app. See PWA-GitManager SETUP.md for configuration.

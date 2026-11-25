@@ -217,6 +217,7 @@ def build(*,allow_partial=False):
     provenance=[]
     for app in apps:
         entry={k:app[k] for k in ('id','name','glyph','module','stylesheet')}
+        if app.get('service_button'):entry['serviceButton']=True
         try:
             version=package_app(app)
             commit=git_output('rev-parse','HEAD',cwd=ROOT/safe_rel(app['source'])) if not allow_partial else None

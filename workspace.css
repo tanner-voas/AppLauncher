@@ -105,3 +105,6 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 .launcher-version-node{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;padding:5px 0;overflow-wrap:anywhere;font-size:.95rem}
 .launcher-version-node strong{font-variant-numeric:tabular-nums;font-size:.85rem}
 .launcher-version-node code{flex-basis:100%;font-size:.73rem;color:var(--muted)}
+
+.launcher-service{flex:0 0 41px;text-decoration:none}.launcher-service:disabled{opacity:.45}
+@media(max-width:420px){.launcher-header{grid-template-columns:minmax(0,1fr)}.launcher-actions{justify-self:end;max-width:100%;gap:6px}.launcher-header .launcher-heading{min-width:0}}

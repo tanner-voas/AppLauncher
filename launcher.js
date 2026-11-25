@@ -30,7 +30,12 @@ function versionDialog(){
 }
 export function homeScreen(current){
   const failures=APPS.filter(app=>app.status==='failed');
-  const tiles=APPS.map(app=>{
+  const services=APPS.filter(app=>app.serviceButton).map(app=>{
+    const id=escapeHtml(app.id),name=escapeHtml(app.name);
+    const icon=`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="5" r="2.4"/><circle cx="18" cy="5" r="2.4"/><circle cx="6" cy="19" r="2.4"/><path d="M6 7.5v9M18 7.5v3a4 4 0 0 1-4 4H6"/></svg>`;
+    return app.status==='failed'?`<button class="icon-btn launcher-service" disabled title="${name} unavailable" aria-label="${name} unavailable">${icon}</button>`:`<a class="icon-btn launcher-service" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}" title="${name}">${icon}</a>`;
+  }).join('');
+  const tiles=APPS.filter(app=>!app.serviceButton).map(app=>{
     const failed=app.status==='failed';
     const name=escapeHtml(app.name),glyph=escapeHtml(app.glyph),id=escapeHtml(app.id);
     // Preserve the glyph underneath the image as a network/offline fallback.
@@ -42,7 +47,7 @@ export function homeScreen(current){
     return `<a class="launcher-tile" data-launch-app="${id}" href="${appLaunchUrl(current,app.id)}" aria-label="Open ${name}">${common}<span class="launcher-tile-version">v${escapeHtml(app.version)}</span><small class="launcher-offline-state" data-offline-app="${id}"></small></a>`;
   }).join('');
   return `<div class="launcher-screen"><header class="launcher-header"><div class="launcher-heading"><img class="launcher-brand-icon" src="./icons/icon-192.png" alt=""><h1 class="launcher-workspace-title">Workspace <small class="launcher-version">v${LAUNCHER_VERSION}</small></h1></div>
-    <div class="launcher-actions">${profileButton}<button type="button" class="launcher-info icon-btn" data-show-versions aria-label="Package versions" title="Package versions"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg></button><button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
+    <div class="launcher-actions">${profileButton}${services}<button type="button" class="launcher-info icon-btn" data-show-versions aria-label="Package versions" title="Package versions"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg></button><button type="button" class="launcher-refresh icon-btn" data-update-launcher aria-label="Check for updates and reload" title="Check for updates and reload">
       <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L3 9V3m0 6h6M4 13a8 8 0 0 0 14 5l3-3v6m0-6h-6"/></svg>
     </button></div></header>
     <nav class="launcher-grid" aria-label="Applications">${tiles}</nav>

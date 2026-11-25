@@ -27,7 +27,9 @@ test('v0.1.5 displays host and all four application versions without changing wo
   assert.match(html,/data-launch-app="worldgen"/);
   assert.match(html,/WorldGen/);
   assert.match(html,/data-launch-app="ascendant"/);
-  assert.match(html,/data-launch-app="gitmanager"/);
+  assert.match(html,/class="icon-btn launcher-service" data-launch-app="gitmanager"/);
+  assert.doesNotMatch(html,/class="launcher-tile" data-launch-app="gitmanager"/);
+  assert.equal(APPS[3].serviceButton,true);
   assert.ok(fs.existsSync(new URL('../dist/apps/gitmanager/app.js',import.meta.url)));
   assert.equal(APPS[2].icon,'./apps/ascendant/icons/icon-192.png');
   assert.ok(fs.existsSync(new URL('../dist/apps/ascendant/engine.js',import.meta.url)));

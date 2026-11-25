@@ -41,7 +41,8 @@
       "distribution": "dist/gitmanager",
       "destination": "apps/gitmanager",
       "module": "./apps/gitmanager/app.js",
-      "stylesheet": "./apps/gitmanager/styles.css"
+      "stylesheet": "./apps/gitmanager/styles.css",
+      "service_button": true
     }
   ]
 }
