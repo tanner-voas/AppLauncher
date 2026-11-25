@@ -7,8 +7,8 @@
   -webkit-font-smoothing:antialiased;
 }
 * {box-sizing:border-box}
-html{background:var(--cream);min-height:100%;scroll-behavior:auto;overflow-x:hidden}
-body{margin:0;min-height:100dvh;max-width:100%;overflow-x:hidden;color:var(--ink);overscroll-behavior-y:contain}
+html{background:var(--cream);min-height:100%;scroll-behavior:auto;overflow-x:clip}
+body{margin:0;min-height:100dvh;max-width:100%;overflow-x:clip;color:var(--ink);overscroll-behavior-y:contain}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:disabled{opacity:.45;cursor:not-allowed}
@@ -58,8 +58,8 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 .launcher-build-warning{margin-top:19px;color:#8b5950;font-size:12px;line-height:1.5;max-width:450px}
 
 /* v0.1.6 — anchored single-row header, iPhone safe area and in-place updater. */
-.launcher-header{position:sticky;top:calc(12px + env(safe-area-inset-top));z-index:15;padding:12px 0 14px;background:var(--cream);min-width:0}
-.launcher-screen{padding-top:calc(25px + env(safe-area-inset-top))}
+.launcher-header{position:sticky;top:0;z-index:15;padding:calc(17px + env(safe-area-inset-top)) 0 14px;background:var(--cream);min-width:0}
+.launcher-screen{padding-top:0}
 .launcher-refresh{flex:0 0 42px;width:42px;height:42px;min-width:42px;min-height:42px}
 .launcher-refresh:disabled{min-width:42px;padding:0;opacity:1}
 .pwa-updating .ico{animation:launcher-header-spin .85s linear infinite;transform-origin:center}
@@ -112,3 +112,6 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 /* Browser page lock; custom canvas/map touch-action rules remain intact. */
 html,body{touch-action:manipulation}
 input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px}
+
+/* UI-01: keep the version dialog close control visible in its own scrollport. */
+.launcher-info-heading{position:sticky;top:0;z-index:1;background:var(--paper);padding:12px 0;margin-top:-12px}
