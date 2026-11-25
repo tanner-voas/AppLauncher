@@ -67,8 +67,8 @@ test('PWA identity, viewport lock and app storage survive migration',()=>{
   assert.equal(manifest.name,'AppLauncher — My Workspace');
   assert.equal(manifest.short_name,'Launcher');
   assert.equal(manifest.start_url,'./');
-  assert.doesNotMatch(read('index.html'),/maximum-scale|user-scalable=no/);
-  assert.doesNotMatch(read('viewport-lock.js'),/preventDefault|addEventListener/);
+  assert.match(read('index.html'),/maximum-scale=1, user-scalable=no/);
+  assert.match(read('viewport-lock.js'),/preventDefault/);
   assert.match(read('app.js'),/await loadState\(\)/);
   assert.match(read('app.js'),/await reader.flush\(\)/);
   if(APPS[0].version!=='0.8.16'){

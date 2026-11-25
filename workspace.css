@@ -108,3 +108,7 @@ svg.ico{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;fill:none;st
 
 .launcher-service{flex:0 0 41px;text-decoration:none}.launcher-service:disabled{opacity:.45}
 @media(max-width:420px){.launcher-header{grid-template-columns:minmax(0,1fr)}.launcher-actions{justify-self:end;max-width:100%;gap:6px}.launcher-header .launcher-heading{min-width:0}}
+
+/* Browser page lock; custom canvas/map touch-action rules remain intact. */
+html,body{touch-action:manipulation}
+input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px}

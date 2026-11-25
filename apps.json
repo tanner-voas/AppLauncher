@@ -42,7 +42,8 @@
       "destination": "apps/gitmanager",
       "module": "./apps/gitmanager/app.js",
       "stylesheet": "./apps/gitmanager/styles.css",
-      "service_button": true
+      "service_button": true,
+      "tile_icon": "src/icon-192.png"
     }
   ]
 }
