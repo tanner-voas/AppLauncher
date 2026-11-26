@@ -1,4 +1,4 @@
-# AppLauncher v0.1.22
+# AppLauncher v0.1.23
 
 **v0.1.17:** Compact header, automatic source-history tags and preserved production promotion.
 
